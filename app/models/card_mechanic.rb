@@ -1,0 +1,2 @@
+class CardMechanic < ApplicationRecord
+end

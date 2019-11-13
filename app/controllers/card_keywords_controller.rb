@@ -1,0 +1,2 @@
+class CardKeywordsController < ApplicationController
+end
