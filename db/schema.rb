@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_11_13_203901) do
+ActiveRecord::Schema.define(version: 2019_11_22_190233) do
 
   create_table "artists", force: :cascade do |t|
     t.string "name"
@@ -72,12 +72,27 @@ ActiveRecord::Schema.define(version: 2019_11_13_203901) do
     t.string "card_type"
   end
 
+  create_table "deck_cards", force: :cascade do |t|
+    t.integer "deck_id"
+    t.integer "card_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "deck_mechanics", force: :cascade do |t|
+    t.integer "mechanic_id"
+    t.integer "deck_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "decks", force: :cascade do |t|
     t.string "name"
     t.string "deck_code"
     t.integer "creator_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "player_class_id"
   end
 
   create_table "keywords", force: :cascade do |t|
