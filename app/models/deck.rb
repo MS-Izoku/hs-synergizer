@@ -21,7 +21,7 @@ class Deck < ApplicationRecord
     temp_deck = []
     decoded_deck_code[:cards].each do |card|
       temp_deck.push(Card.find_by(dbf_id: card))
-      p Card.find_by(dbf_id: card)
+      #p Card.find_by(dbf_id: card)
     end
     temp_deck
   end
@@ -31,23 +31,15 @@ class Deck < ApplicationRecord
     if(Deck.find_by(deck_code: encoded_deck_code))
       return Deck.find_by(deck_code: encoded_deck_code)
     end
+
     new_deck = Deck.new
-    card_arr = Deck.generate_cards_from_code(Deck.decode(encoded_deck_code))
+    deck_from_code = Deck.decode(encoded_deck_code)
+    p deck_from_code
+    p "<<<<<<<<<"
+    deck_cards = Deck.generate_cards_from_code(deck_from_code)
 
+    # get the Player class deck-code identifier to use in the deck creating method
 
-    deck_class = card_arr.each do |card|
-      if card.player_class.name != 'Neutral'
-        return card.player_class
-      else next
-      end
-    end
-
-    new_deck.player_class_id = deck_class.id
-    new_deck.save
-    
-    p '<<<<<<<<<<<<<<<<<<<<<<<'
-    p deck_class
-    nil
   end
 
   # cards should be a hash, player class is a string
