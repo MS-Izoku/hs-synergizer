@@ -65,6 +65,7 @@ class Card < ApplicationRecord
     result
   end
 
+  # this should not live here, not in this class
   def plain_text
     # needs optomization, not dry enough
     text = Nokogiri::HTML(card_text).text
@@ -87,6 +88,7 @@ class Card < ApplicationRecord
     text
   end
 
+  # put this somewhere else, not in this class
   def keywords
     all_keywords = []
     #arr_check = self.plain_text.split(/[()]+/).reject{|str| str == "." || str == ". "}
