@@ -38,6 +38,10 @@ class Deck < ApplicationRecord
     p "<<<<<<<<<"
     deck_cards = Deck.generate_cards_from_code(deck_from_code)
 
+    deck_class = PlayerClass.find_by(dbf_id: deck_from_code[:heroes])
+    p deck_class
+    p "<<<<<<<<<<<<"
+
     # get the Player class deck-code identifier to use in the deck creating method
 
   end

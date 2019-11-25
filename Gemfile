@@ -22,10 +22,14 @@ gem 'puma', '~> 3.11'
 # Use Capistrano for deployment
 # gem 'capistrano-rails', group: :development
 
+gem 'pry', '~> 0.10.3'
+gem 'pretty_json', '~> 1.0', '>= 1.0.1'
+
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', '>= 1.1.0', require: false
 
-gem 'deckstrings'
+gem 'deckstrings' # required to encode / decode deck codes
+gem 'nokogiri' # needed to parse rich card-text
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 gem 'rack-cors'

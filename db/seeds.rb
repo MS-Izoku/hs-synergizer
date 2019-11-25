@@ -3,30 +3,52 @@
 require 'uri'
 require 'net/http'
 require 'openssl'
+require 'pry'
+require 'pretty_json'
 
 skip_fetch = false # Set this to false when you need to fetch
 if skip_fetch == false
   puts 'Fetching Card Data <<<<<<'
-  url = URI('https://omgvamp-hearthstone-v1.p.rapidapi.com/cards')
+
+  url = URI("https://omgvamp-hearthstone-v1.p.rapidapi.com/cards")
 
   http = Net::HTTP.new(url.host, url.port)
   http.use_ssl = true
   http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
   request = Net::HTTP::Get.new(url)
-  request['x-rapidapi-host'] = 'omgvamp-hearthstone-v1.p.rapidapi.com'
-  request['x-rapidapi-key'] = 'c15502ebd8msh183a4fdd23c6591p1954c4jsn302be1511f5b'
+  request["x-rapidapi-host"] = 'omgvamp-hearthstone-v1.p.rapidapi.com'
+  request["x-rapidapi-key"] = 'c15502ebd8msh183a4fdd23c6591p1954c4jsn302be1511f5b'
 
   response = http.request(request)
-  puts 'PARSING JSON <<<<<<<<<'
+  #puts response.read_body
+  puts PrettyJSON.new(response.read_body)
+  
   data = JSON.parse(response.read_body)
+  # url = URI('https://omgvamp-hearthstone-v1.p.rapidapi.com/cards')
+
+  # http = Net::HTTP.new(url.host, url.port)
+  # http.use_ssl = true
+  # http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+  # request = Net::HTTP::Get.new(url)
+  # request['x-rapidapi-host'] = 'omgvamp-hearthstone-v1.p.rapidapi.com'
+  # request['x-rapidapi-key'] = 'c15502ebd8msh183a4fdd23c6591p1954c4jsn302be1511f5b'
+
+  # response = http.request(request)
+  # puts 'PARSING JSON <<<<<<<<<'
+  # data = JSON.parse(response.read_body)
+  
+ # binding.pry
 
   data.each do |_card_set_name, set_data|
-    p "Creating #{_card_set_name}"
+    p "> Creating Set: #{_card_set_name}"
     my_set = CardSet.create(name: _card_set_name)
+    #binding.pry
     set_data.each do |card|
       new_card = Card.new
       new_card.name = card['name']
+      p ">> Creating Card: #{new_card.name}"
       new_card.dbf_id = card['dbfId']
 
       new_card.cost = card['cost'].to_i
@@ -77,15 +99,16 @@ if skip_fetch == false
       new_card.artist_id = my_artist.id
 
       # UNTESTED
-      card_type = case card
+      case card
       when card['health'] != nil && card['attack'] != nil
-        return "Minion"
+        new_card.card_type "Minion"
       when card['durability'] != nil && card['attack'] != nil
-        return "Weapon"
+        new_card.card_type "Weapon"
       else
-        return "Spell"
+        new_card.card_type = "Spell"
       end
-      new_card.card_type = card_type
+      ">>>> Set Card Type to: #{new_card.card_type}"
+      # new_card.card_type = card_type
       # UNTESTED END
 
       if card['mechanics']
@@ -99,7 +122,7 @@ if skip_fetch == false
                 temp_mechanic = Mechanic.create(name: mechanic['name'])
             end
             m_name = mechanic['name']
-            p "Creating Mechanic: #{m_name}"
+            p ">>> Creating Mechanic: #{m_name}"
           end
           CardMechanic.create(mechanic_id: temp_mechanic.id, card_id: new_card.id)
         end
@@ -117,6 +140,7 @@ if skip_fetch == false
 
 end
 
+p ">> Adjusting Cardset Data"
 # Adding Years and Standard-Play to CardSets
 CardSet.find_by(name: 'Basic').update(year: 2014, standard: true)
 CardSet.find_by(name: 'Classic').update(year: 2014, standard: true)
@@ -140,7 +164,16 @@ CardSet.find_by(name: 'Saviors of Uldum').update(year: 2019, standard: true)
 CardSet.find_by(name: 'Descent of Dragons').update(year: 2019, standard: true)
 CardSet.find_by(name: 'Wild Event').update(year: 2019, standard: true)
 
-#Keyword Generation
-# KeyWord.create(word: "")
+# Manual Setup for DeckBuilding
+p ">> Setting Up PlayerClass DBFID's"
+PlayerClass.find_by(name: "Mage").update(dbf_id: 637)
+PlayerClass.find_by(name: "Warrior").update(dbf_id: 7)
+PlayerClass.find_by(name: "Hunter").update(dbf_id: 31)
+PlayerClass.find_by(name: "Shaman").update(dbf_id: 1066)
+PlayerClass.find_by(name: "Priest").update(dbf_id: 813)
+PlayerClass.find_by(name: "Paladin").update(dbf_id: 671)
+PlayerClass.find_by(name: "Warlock").update(dbf_id: 893)
+PlayerClass.find_by(name: "Druid").update(dbf_id: 274)
+PlayerClass.find_by(name: "Rogue").update(dbf_id: 930)
 
 # Generate Synergies in Standard Cards
