@@ -107,13 +107,36 @@ class Card < ApplicationRecord
     p all_words
 
     all_words.flatten.each do |word|
-      if word.include?("/")
-        all_keywords[:other_stats] = word
+      if word.downcase == "add"
+        # add a _ to your hand / add a x/x minion-name to your hand / add x x/x minions to your hand
+        # add a _ to your opponents hand
         next
       end
-      if word == "Add" || word == "add"
-        next
+      if word.downcase == "shuffle"
+        # shuffle a _ into your deck / shuffle _ into your deck / shuffle x _'s into your deck
+        # shuffle a _ into your opponents deck / shuffle _ into your opponents deck / shuffle x _'s into your opponents deck
+
       end
+
+      if word.downcase == "give"
+        # give a friendly minion
+        # give a minion
+        # give an enemy minion
+        # give your opponent / give your opponent x _'s
+      end
+
+      if word.downcase == "can't"
+        # can't be targeted by spells or hero powers
+      end
+
+      if word.downcase == "discover"
+        # discover a _
+        # whenever you discover a card
+      end
+      if word.downcase == "bomb"
+        # add to the bomb count
+      end
+
       if all_keywords.has_key?(word)
         all_keywords[word] += 1
       else
