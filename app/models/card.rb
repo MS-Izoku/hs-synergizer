@@ -90,25 +90,47 @@ class Card < ApplicationRecord
 
   # put this somewhere else, not in this class
   def keywords
-    all_keywords = []
-    #arr_check = self.plain_text.split(/[()]+/).reject{|str| str == "." || str == ". "}
+    all_keywords = {}
+
     p self.card_text
     temp_str = ""
     remove_periods = self.plain_text.split(".").each do |str|
       temp_str = temp_str + str
     end
 
-    p temp_str
-
 
     arr_check = temp_str.split(/[()]+/)
-    p arr_check
 
     all_words = arr_check.collect do |str|
       str.split(" ")
     end
     p all_words
 
+    all_words.flatten.each do |word|
+      if word.include?("/")
+        all_keywords[:other_stats] = word
+        next
+      end
+      if word == "Add" || word == "add"
+        next
+      end
+      if all_keywords.has_key?(word)
+        all_keywords[word] += 1
+      else
+        all_keywords[word] = 1
+      end
+    end
+
+
     all_keywords
+  end
+
+  def string_replace(input_str , filter_str)
+    temp_str = input_str
+    if input_str.include?(filter_str)
+      temp_str = input_str.split(filter_str).filter{ |str| str != filter_str }
+    end
+
+    temp_str
   end
 end
