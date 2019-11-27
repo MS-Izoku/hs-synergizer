@@ -8,7 +8,7 @@ class Mechanic < ApplicationRecord
 
     def self.names
         temp = []
-        Mechanic.all.each { |mechanic| temp.push(mechanic.name) }
+        Mechanic.all.each { |mechanic| temp.push(mechanic.name.downcase) }
         return temp
     end
 end

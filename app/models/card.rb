@@ -105,9 +105,29 @@ class Card < ApplicationRecord
     end
   end
 
+  def generate_keywords
+    all_keywords = {}
+    plain_text = self.plain_text.downcase
+    Card.key_phrases.each do |phrase|
+      if plain_text.include?(phrase)
+        all_keywords[phrase] = 1
+        plain_text.slice!(phrase)
+      else next
+      end
+    end
+
+    Mechanic.names.each do |mechanic|
+      if plain_text.include?(" #{mechanic}") || plain_text.include?("#{mechanic} ")
+        all_keywords[mechanic] = 1
+        plain_text.slice!(mechanic)
+      end
+    end
+    p plain_text
+
+    all_keywords
+  end
+
   def self.key_phrases
-    # if your opponent plays x
-    # after you
     ['if your deck has no duplicates', "your opponent's cards", 'at the start of your turn', '50% chance to',
      'if your board is full of', 'whenever you play', 'after you', 'each player', 'reveal a', 'for each',
      "if you're holding a spell that costs (5) or more", 'if you have unspent mana at the end of your turn',
@@ -117,8 +137,8 @@ class Card < ApplicationRecord
      'whenever your hero attacks', 'choose a', 'if you have', 'spell damage', 'your spells cost', 'your opponents spells cost', 'copy a',
      'whenever this minion', "can't be targeted by spells or hero powers", 'until your next turn', 'take an extra turn', "fill each player's",
      'after this minion survives damage', 'at the start your turn', 'your minions with', 'casts a random', 'plays a random',
-    "start the game" , "if your deck is empty" , "if you have no" , "if your hand has no" , "go dormant" , "the first" , "your first",
-  "your cards that summon minions"]
+     'start the game', 'if your deck is empty', 'if you have no', 'if your hand has no', 'go dormant', 'the first', 'your first',
+     'your cards that summon minions']
   end
 
   private
