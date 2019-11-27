@@ -72,7 +72,7 @@ class Card < ApplicationRecord
     temp_str = ''
     text.split('[x]').reject { |str| str == '' }.each { |str| temp_str += str }
     text = temp_str
-    
+
     temp_str = ''
     text.split(':').reject { |str| str == '' }.each { |str| temp_str += str }
     text = temp_str
@@ -88,72 +88,42 @@ class Card < ApplicationRecord
     text
   end
 
-  # put this somewhere else, not in this class
-  def keywords
-    all_keywords = {}
+  # this does not add a keyphrase, it references the "add" keyword
+  def self.key_phrase_add(phrase); end
 
-    p self.card_text
-    temp_str = ""
-    remove_periods = self.plain_text.split(".").each do |str|
-      temp_str = temp_str + str
+  # parse through a discover keyphrase
+  def self.key_phrase_discover(phrase)
+    phrase = phrase.downcase
+    all_words = word_split(phrase)
+    if phrase.include?('discover a')
+      if phrase.include?(' a ') && phrase.include?('minion')
+        # discover a minion
+        # discover an X cost minion
+      end
+    else
+      return
     end
-
-
-    arr_check = temp_str.split(/[()]+/)
-
-    all_words = arr_check.collect do |str|
-      str.split(" ")
-    end
-    p all_words
-
-    all_words.flatten.each do |word|
-      if word.downcase == "add"
-        # add a _ to your hand / add a x/x minion-name to your hand / add x x/x minions to your hand
-        # add a _ to your opponents hand
-        next
-      end
-      if word.downcase == "shuffle"
-        # shuffle a _ into your deck / shuffle _ into your deck / shuffle x _'s into your deck
-        # shuffle a _ into your opponents deck / shuffle _ into your opponents deck / shuffle x _'s into your opponents deck
-
-      end
-
-      if word.downcase == "give"
-        # give a friendly minion
-        # give a minion
-        # give an enemy minion
-        # give your opponent / give your opponent x _'s
-      end
-
-      if word.downcase == "can't"
-        # can't be targeted by spells or hero powers
-      end
-
-      if word.downcase == "discover"
-        # discover a _
-        # whenever you discover a card
-      end
-      if word.downcase == "bomb"
-        # add to the bomb count
-      end
-
-      if all_keywords.has_key?(word)
-        all_keywords[word] += 1
-      else
-        all_keywords[word] = 1
-      end
-    end
-
-
-    all_keywords
   end
 
-  def string_replace(input_str , filter_str)
-    temp_str = input_str
-    if input_str.include?(filter_str)
-      temp_str = input_str.split(filter_str).filter{ |str| str != filter_str }
-    end
+  def self.key_phrases
+    # if your opponent plays x
+    # after you
+    ['if your deck has no duplicates', "your opponent's cards", 'at the start of your turn', '50% chance to',
+     'if your board is full of', 'whenever you play', 'after you', 'each player', 'reveal a', 'for each',
+     "if you're holding a spell that costs (5) or more", 'if you have unspent mana at the end of your turn',
+     'if you control', 'it costs', 'after you play', 'after you cast', 'targets chosen randomly', 'split among', "set a minion's",
+     'from your deck', 'hero power', 'return it to life', 'after you summon a minion', 'return a', 'change each',
+     'equip a', 'casts when drawn', 'summons when', "while you're", 'your hero takes damage', 'discard', 'for the rest of the game',
+     'whenever your hero attacks', 'choose a', 'if you have', 'spell damage', 'your spells cost', 'your opponents spells cost', 'copy a',
+     'whenever this minion', "can't be targeted by spells or hero powers", 'until your next turn', 'take an extra turn', "fill each player's",
+     'after this minion survives damage', 'at the start your turn', 'your minions with', 'casts a random', 'plays a random',
+    "start the game" , "if your deck is empty" , "if you have no" , "if your hand has no" , "go dormant" , "the first" , "your first",
+  "your cards that summon minions"]
+  end
 
-    temp_str
+  private
+
+  def word_split(phrase)
+    phrase.split(' ')
   end
 end
