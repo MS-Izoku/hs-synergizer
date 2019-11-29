@@ -6,6 +6,10 @@ require 'openssl'
 require 'pry'
 require 'pretty_json'
 
+Mechanic.create(name: "Summon")
+Mechanic.create(name: "Choose One")
+Mechanic.create(name: "Passive")
+
 skip_fetch = false # Set this to false when you need to fetch
 if skip_fetch == false
   puts 'Fetching Card Data <<<<<<'
@@ -138,6 +142,51 @@ if skip_fetch == false
     end
   end
 
+end
+
+Mechanic.all.each do |mechanic|
+  mechanic.update(name: mechanic.name.downcase)
+end
+Mechanic.find_by(name: "adapt").update(description: "Choose from one of three possible upgrades to the possessing minion.")
+Mechanic.find_by(name: "battlecry").update(descrition: "Activates when played from the hand.")
+Mechanic.find_by(name: "casts when drawn").update(description: "The spell card is automatically cast for no mana when drawn from your deck, and the next card in the deck is then drawn. Only found on a few Uncollectible spells.")
+Mechanic.find_by(name: "charge").update(description: "Enables the minion to attack on the same turn that it is summoned.")
+Mechanic.find_by(name: "choose one").update(description: "Gives the controlling player the ability to choose between two or more effects stated in the card. Found only on druid cards.")
+Mechanic.find_by(name: "divine shield").update(description: "")
+Mechanic.find_by(name: "combo").update(description: "Has an effect that activates when played from hand, after you've played at least one card this turn.")
+Mechanic.find_by(name: "lifesteal").update(description: "When damage is dealt, it heals the owners hero.")
+Mechanic.find_by(name: "inspire").update(description: "When you use a hero power with an Inspire minion on your side of the board, activate the effect.")
+Mechanic.find_by(name: "overkill").update(description: "When you attack and kill a minion, and there is more than enough damage on the killing blow, activate the effect.")
+Mechanic.find_by(name: "overload").update(description: "Activated when the card is played from the hand, at the price of reduced mana next turn.")
+Mechanic.find_by(name: "poisonous").update(description: "Instantly kills whatever minion it hits, with the exception of Divine Shield.")
+Mechanic.find_by(name: "quest").update(description: "A (1) cost spell that has a delayed effect, which is worked up to throughout the course of the game.  When completed, they have a specific reward.")
+Mechanic.find_by(name: "reborn").update(description: "When destroyed, return this minion to life with (1) hp and remove the Reborn effect")
+Mechanic.find_by(name: "recruit").update(description: "Instantly play a card from your deck, it does not trigger Battlecries")
+Mechanic.find_by(name: "rush").update(description: "Can instantly attack minions on the board.")
+Mechanic.find_by(name: "secret").update(description: "A spell that is activated when your opponent takes a specific action.")
+Mechanic.find_by(name: "silence").update(description: "Remove all buffs and effects on a minion on the board")
+Mechanic.find_by(name: "spell damage").update(description: "Increase the damage of spells cast")
+Mechanic.find_by(name: "taunt").update(description: "Enemy minions must attack a Taunt minion if present")
+Mechanic.find_by(name: "twinspell").update(description: "After casting a Twinspell, add a copy of the original spell to you hand (without the Twinspell keyword).")
+Mechanic.find_by(name: "windfury").update(description: "A Windfury minion can attack twice per turn")
+Mechanic.find_by(name: "jade golem").update(description: "Summons a (1/1) Jade Golem minion.  The more Jade cards are played, the larger the base-stats on the following Jade Golems become.")
+Mechanic.find_by(name: "freeze").update(description: "A frozen character cannot attack this turn.")
+Mechanic.find_by(name: "echo").update(description: "A card that can be played multiple times from the hand, if the user has enough mana.")
+Mechanic.find_by(name: "deathrattle").update(description: "An effect that activates when a minion is destoyed, or otherwise triggered by another card")
+Mechanic.find_by(name: "").update(description: "")
+
+
+# untested
+p ">> Deleting Useless Card Data"
+p ">>> Checking for Mechanically Named Cards (ex: 'Battlecry' , 'Rush')"
+Mechanic.all.each do |mechanic|
+  Card.all.each do |card|
+    if(card.name == mechanic.name)
+      p "Deleting #{card.name} from set: #{card.card_set.name}"
+      Card.find_by(id: card.id).delete
+    else next
+    end
+  end
 end
 
 p ">> Adjusting Cardset Data"

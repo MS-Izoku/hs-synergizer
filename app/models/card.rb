@@ -65,6 +65,14 @@ class Card < ApplicationRecord
     result
   end
 
+  def self.names
+    temp = []
+    Card.all.each do |card|
+      temp.push(card.name)
+    end
+    temp
+  end
+
   # this should not live here, not in this class
   def plain_text
     # needs optomization, not dry enough
@@ -88,25 +96,11 @@ class Card < ApplicationRecord
     text
   end
 
-  # this does not add a keyphrase, it references the "add" keyword
-  def self.key_phrase_add(phrase); end
-
-  # parse through a discover keyphrase
-  def self.key_phrase_discover(phrase)
-    phrase = phrase.downcase
-    all_words = word_split(phrase)
-    if phrase.include?('discover a')
-      if phrase.include?(' a ') && phrase.include?('minion')
-        # discover a minion
-        # discover an X cost minion
-      end
-    else
-      return
-    end
-  end
-
   def generate_keywords
-    all_keywords = {}
+    all_keywords = {
+      minions: [],
+      tokens: []
+    }
     plain_text = self.plain_text.downcase
     Card.key_phrases.each do |phrase|
       if plain_text.include?(phrase)
@@ -117,11 +111,20 @@ class Card < ApplicationRecord
     end
 
     Mechanic.names.each do |mechanic|
-      if plain_text.include?(" #{mechanic}") || plain_text.include?("#{mechanic} ")
+      if plain_text.include?(" #{mechanic.downcase}") || plain_text.include?("#{mechanic.downcase} ")
         all_keywords[mechanic] = 1
         plain_text.slice!(mechanic)
       end
     end
+
+    Card.names.each do |name|
+      if plain_text.include?(name.downcase)
+        p Card.where(name: name)
+        all_keywords[:minions].push(name)
+        plain_text.slice!(name)
+      end
+    end
+
     p plain_text
 
     all_keywords
@@ -138,7 +141,7 @@ class Card < ApplicationRecord
      'whenever this minion', "can't be targeted by spells or hero powers", 'until your next turn', 'take an extra turn', "fill each player's",
      'after this minion survives damage', 'at the start your turn', 'your minions with', 'casts a random', 'plays a random',
      'start the game', 'if your deck is empty', 'if you have no', 'if your hand has no', 'go dormant', 'the first', 'your first',
-     'your cards that summon minions']
+     'your cards that summon minions', "if you're holding a dragon" , "if you played an elemental last turn"]
   end
 
   private
