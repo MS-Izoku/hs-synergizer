@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'nokogiri'
+require 'pry'
 
 class Card < ApplicationRecord
   belongs_to :artist, optional: :true
@@ -77,12 +78,17 @@ class Card < ApplicationRecord
     # needs optomization, not dry enough
     text = Nokogiri::HTML(card_text).text
     temp_str = ''
+
+    p text
+    # Something is happening here that is causing issues splitting up the string
     text.split('[x]').reject { |str| str == '' }.each { |str| temp_str += str }
     text = temp_str
+    p temp_str
 
     temp_str = ''
     text.split(':').reject { |str| str == '' }.each { |str| temp_str += str }
     text = temp_str
+    p temp_str
 
     text = text.split('\\n')
     temp_str = ''
@@ -91,8 +97,9 @@ class Card < ApplicationRecord
       temp_str += str
     end
     text = temp_str
+    p temp_str
 
-    text = text.sub! "_"  , " " # underscores sometimes come in with certain token/stat cards
+    text = text.sub! '_', ' ' # underscores sometimes come in with certain token/stat cards
     text
   end
 
@@ -150,57 +157,59 @@ class Card < ApplicationRecord
      'your cards that summon minions', "if you're holding a dragon", 'if you played an elemental last turn']
   end
 
-  def parse_key__phrases
+  def parse_key_phrases
     all_keywords = {
-      remaining_plain_text: ""
-
+      remaining_plain_text: ''
     }
+
     text = plain_text
     Deck.key_phrases.each do |phrase|
-      if text.include?(phrase)
-        # massive conditional bit here
-        if phrase == "if your deck has no duplicates"
-          all_keywords[:mechanics]["singleton"] = 1
-        elsif phrase == "return it to life"
-          all_keywords[:mechanics][:ressurect] = 1
-        elsif phrase == "if your deck is empty"
-          all_keywords[:mechanics][:empty_deck] = 1
-        elsif phrase == "if you're holding a dragon"
+      next unless text.include?(phrase)
 
-        else
-          all_keywords[phrase] = 1
-        end
+      # massive conditional bit here
+      if phrase == 'if your deck has no duplicates'
+        all_keywords[:mechanics]['singleton'] = 1
+      elsif phrase == 'return it to life'
+        all_keywords[:mechanics][:ressurect] = 1
+      elsif phrase == 'if your deck is empty'
+        all_keywords[:mechanics][:empty_deck] = 1
+      elsif phrase == "if you're holding a dragon"
 
-        text.slice!(phrase)
+      else
+        all_keywords[phrase] = 1
       end
+
+      text.slice!(phrase)
     end
     all_keywords[:remaining_plain_text] = text
+
+    all_keywords
   end
 
   def check_for_minion_type_synergy(input_str, tribe_name)
     Tribe.find_by(name: tribe_name) if input_str.include?(tribe_name)
   end
 
-  def check_for_stats(input_str = self.plain_text)
+  def check_for_stats(input_str = plain_text)
     inp = input_str.downcase
-    if inp.include?("/")
-      slash_index = inp.index("/")
-      p slash_index
-      token_values = [inp[slash_index - 1].to_i, inp[slash_index + 1].to_i]
+    stat_hash = {}
+    if inp.include?('/')
+      slash_index = inp.index('/')
+      p "Slash Index: #{slash_index}"
+      # stat_values = [inp[slash_index - 1].to_i, inp[slash_index + 1].to_i]
 
-      if inp[slash_index - 2].to_i != 0
-        attack_val = (inp[slash_index - 1] + inp[slash_index - 2]).to_i
-        p attack_val
+      stat_values = inp.scan(/\d+|\bone\b|two|three|four|five|six|seven|eight|nine|ten/)
+      if stat_values.length > 2
+        stat_hash[:count] = stat_values[0]
+        stat_hash[:attack] = stat_values[1]
+        stat_hash[:health] = stat_values[2]
+      else
+        stat_hash[:count] = 1
+        stat_hash[:attack] = stat_values[0]
+        stat_hash[:health] = stat_values[1]
       end
 
-      if inp[slash_index + 2].to_i != 0 || inp[slash_index + 2] == "+"
-        health_val = (inp[slash_index + 1] + inp[slash_index + 2]).to_i
-        p health_val
-      end
-        
-  
-      p token_values
-      return "Slash Found"
+      return stat_hash
     end
   end
 
@@ -274,5 +283,9 @@ class Card < ApplicationRecord
 
   def word_split(phrase)
     phrase.split(' ')
+  end
+
+  def number_strings # necessary for some string parsing
+    %w[one two three four five six seven eight nine ten]
   end
 end

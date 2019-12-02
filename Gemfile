@@ -30,6 +30,7 @@ gem 'bootsnap', '>= 1.1.0', require: false
 
 gem 'deckstrings' # required to encode / decode deck codes
 gem 'nokogiri' # needed to parse rich card-text
+gem 'numbers_in_words', '~> 0.4.0' # easy to use number formatting (ex: "two" becomes 2)
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 gem 'rack-cors'
