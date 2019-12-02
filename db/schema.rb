@@ -92,7 +92,7 @@ ActiveRecord::Schema.define(version: 2019_12_01_010919) do
     t.integer "creator_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "player_class_id"
+    t.integer "player_class_id", default: 0
   end
 
   create_table "keywords", force: :cascade do |t|

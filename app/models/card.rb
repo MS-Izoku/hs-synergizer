@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'nokogiri'
+require 'numbers_in_words'
 require 'pry'
 
 class Card < ApplicationRecord
@@ -17,6 +18,10 @@ class Card < ApplicationRecord
 
   def is_standard?
     card_set.standard
+  end
+
+  def self.all_cards # Card.all gives some useless cards
+    return Card.where.not(collectable: nil)
   end
 
   def self.standard_cards
@@ -139,7 +144,7 @@ class Card < ApplicationRecord
     end
 
     p plain_text
-    p check_for_token(plain_text)
+    p self.check_for_stats
     all_keywords
   end
 
@@ -200,7 +205,7 @@ class Card < ApplicationRecord
 
       stat_values = inp.scan(/\d+|\bone\b|two|three|four|five|six|seven|eight|nine|ten/)
       if stat_values.length > 2
-        stat_hash[:count] = stat_values[0]
+        stat_hash[:count] = NumbersInWords.in_numbers(stat_values[0])
         stat_hash[:attack] = stat_values[1]
         stat_hash[:health] = stat_values[2]
       else
@@ -283,9 +288,5 @@ class Card < ApplicationRecord
 
   def word_split(phrase)
     phrase.split(' ')
-  end
-
-  def number_strings # necessary for some string parsing
-    %w[one two three four five six seven eight nine ten]
   end
 end

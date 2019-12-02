@@ -8,7 +8,7 @@ Mechanic.create(name: "Summon")
 Mechanic.create(name: "Choose One")
 Mechanic.create(name: "Passive")
 
-skip_fetch = false # Set this to false when you need to fetch
+skip_fetch = true # Set this to false when you need to fetch
 if skip_fetch == false
   puts 'Fetching Card Data <<<<<<'
 
@@ -74,6 +74,8 @@ if skip_fetch == false
       end
       new_card.dust_cost = cost
 
+      new_card[:collectable] = card["collectable"]
+
       new_card.card_text = card['text']
       new_card.flavor_text = card['flavor']
 
@@ -131,7 +133,7 @@ Mechanic.all.each do |mechanic|
   mechanic.update(name: mechanic.name.downcase)
 end
 Mechanic.find_by(name: "adapt").update(description: "Choose from one of three possible upgrades to the possessing minion.")
-Mechanic.find_by(name: "battlecry").update(descrition: "Activates when played from the hand.")
+Mechanic.find_by(name: "battlecry").update(description: "Activates when played from the hand.")
 Mechanic.find_by(name: "casts when drawn").update(description: "The spell card is automatically cast for no mana when drawn from your deck, and the next card in the deck is then drawn. Only found on a few Uncollectible spells.")
 Mechanic.find_by(name: "charge").update(description: "Enables the minion to attack on the same turn that it is summoned.")
 Mechanic.find_by(name: "choose one").update(description: "Gives the controlling player the ability to choose between two or more effects stated in the card. Found only on druid cards.")
@@ -156,7 +158,7 @@ Mechanic.find_by(name: "jade golem").update(description: "Summons a (1/1) Jade G
 Mechanic.find_by(name: "freeze").update(description: "A frozen character cannot attack this turn.")
 Mechanic.find_by(name: "echo").update(description: "A card that can be played multiple times from the hand, if the user has enough mana.")
 Mechanic.find_by(name: "deathrattle").update(description: "An effect that activates when a minion is destoyed, or otherwise triggered by another card")
-Mechanic.find_by(name: "").update(description: "")
+# Mechanic.find_by(name: "").update(description: "")
 
 
 # untested
