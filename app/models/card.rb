@@ -42,7 +42,6 @@ class Card < ApplicationRecord
 
   def self.find_by_tribe(tribe_name)
     cards = Tribe.find_by(name: tribe_name).cards
-    # return split_array(cards , 100)
     cards
   end
 
@@ -93,15 +92,21 @@ class Card < ApplicationRecord
     end
     text = temp_str
 
+    text = text.sub! "_"  , " " # underscores sometimes come in with certain token/stat cards
     text
   end
 
   def generate_keywords
+    # this will need to have asscociations created later on
+    # may need to be broken up into smaller functions
     all_keywords = {
       minions: [],
       tokens: []
     }
     plain_text = self.plain_text.downcase
+
+    # this is going to need to be its own function to make sure that everything works
+    # the phrases are tricky, since they also have contextual minion synergy
     Card.key_phrases.each do |phrase|
       if plain_text.include?(phrase)
         all_keywords[phrase] = 1
@@ -109,6 +114,7 @@ class Card < ApplicationRecord
       else next
       end
     end
+    # parse_key_phrases
 
     Mechanic.names.each do |mechanic|
       if plain_text.include?(" #{mechanic.downcase}") || plain_text.include?("#{mechanic.downcase} ")
@@ -118,15 +124,15 @@ class Card < ApplicationRecord
     end
 
     Card.names.each do |name|
-      if plain_text.include?(name.downcase)
-        p Card.where(name: name)
-        all_keywords[:minions].push(name)
-        plain_text.slice!(name)
-      end
+      next unless plain_text.include?(name.downcase)
+
+      p Card.where(name: name)
+      all_keywords[:minions].push(name)
+      plain_text.slice!(name)
     end
 
     p plain_text
-
+    p check_for_token(plain_text)
     all_keywords
   end
 
@@ -141,7 +147,127 @@ class Card < ApplicationRecord
      'whenever this minion', "can't be targeted by spells or hero powers", 'until your next turn', 'take an extra turn', "fill each player's",
      'after this minion survives damage', 'at the start your turn', 'your minions with', 'casts a random', 'plays a random',
      'start the game', 'if your deck is empty', 'if you have no', 'if your hand has no', 'go dormant', 'the first', 'your first',
-     'your cards that summon minions', "if you're holding a dragon" , "if you played an elemental last turn"]
+     'your cards that summon minions', "if you're holding a dragon", 'if you played an elemental last turn']
+  end
+
+  def parse_key__phrases
+    all_keywords = {
+      remaining_plain_text: ""
+
+    }
+    text = plain_text
+    Deck.key_phrases.each do |phrase|
+      if text.include?(phrase)
+        # massive conditional bit here
+        if phrase == "if your deck has no duplicates"
+          all_keywords[:mechanics]["singleton"] = 1
+        elsif phrase == "return it to life"
+          all_keywords[:mechanics][:ressurect] = 1
+        elsif phrase == "if your deck is empty"
+          all_keywords[:mechanics][:empty_deck] = 1
+        elsif phrase == "if you're holding a dragon"
+
+        else
+          all_keywords[phrase] = 1
+        end
+
+        text.slice!(phrase)
+      end
+    end
+    all_keywords[:remaining_plain_text] = text
+  end
+
+  def check_for_minion_type_synergy(input_str, tribe_name)
+    Tribe.find_by(name: tribe_name) if input_str.include?(tribe_name)
+  end
+
+  def check_for_stats(input_str = self.plain_text)
+    inp = input_str.downcase
+    if inp.include?("/")
+      slash_index = inp.index("/")
+      p slash_index
+      token_values = [inp[slash_index - 1].to_i, inp[slash_index + 1].to_i]
+
+      if inp[slash_index - 2].to_i != 0
+        attack_val = (inp[slash_index - 1] + inp[slash_index - 2]).to_i
+        p attack_val
+      end
+
+      if inp[slash_index + 2].to_i != 0 || inp[slash_index + 2] == "+"
+        health_val = (inp[slash_index + 1] + inp[slash_index + 2]).to_i
+        p health_val
+      end
+        
+  
+      p token_values
+      return "Slash Found"
+    end
+  end
+
+  # I may use this for something in the future
+  def key_phrase_hash
+    keywords = {
+      'if your deck has no duplicates' => [],
+      "your opponent's cards" => [],
+      'at the start of your turn' => [],
+      '50% chance to' => [],
+      'if your board is full of' => [],
+      'whenever you play' => [],
+      'after you' => [],
+      'each player' => [],
+      'reveal a' => [],
+      'for each' => [],
+      "if you're holding a spell that costs (5) or more" => [],
+      'if you have unspent mana at the end of your turn' => [],
+      'if you control' => [],
+      'it costs' => [],
+      'after you play' => [],
+      'after you cast' => [],
+      'targets chosen randomly' => [],
+      'split among' => [],
+      "set a minion's" => [],
+      'from your deck' => [],
+      'hero power' => [],
+      'return it to life' => [],
+      'after you summon a minion' => [],
+      'return a' => [],
+      'change each' => [],
+      'equip a' => [],
+      'casts when drawn' => [],
+      'summons when' => [],
+      "while you're" => [],
+      'your hero takes damage' => [],
+      'discard' => [],
+      'for the rest of the game' => [],
+      'whenever your hero attacks' => [],
+      'choose a' => [],
+      'if you have' => [],
+      'spell damage' => [],
+      'your spells cost' => [],
+      'your opponents spells cost' => [],
+      'copy a' => [],
+      'whenever this minion' => [],
+      "can't be targeted by spells or hero powers" => [],
+      'until your next turn' => [],
+      'take an extra turn' => [],
+      "fill each player's" => [],
+      'after this minion survives damage' => [],
+      'at the start your turn' => [],
+      'your minions with' => [],
+      'casts a random' => [],
+      'plays a random' => [],
+      'start the game' => [],
+      'if your deck is empty' => [],
+      'if you have no' => [],
+      'if your hand has no' => [],
+      'go dormant' => [],
+      'the first' => [],
+      'your first' => [],
+      'your cards that summon minions' => [],
+      "if you're holding a dragon" => [],
+      'if you played an elemental last turn' => []
+    }
+    keywords
   end
 
   private

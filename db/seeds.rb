@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require 'uri'
 require 'net/http'
 require 'openssl'
@@ -29,21 +27,6 @@ if skip_fetch == false
   puts PrettyJSON.new(response.read_body)
   
   data = JSON.parse(response.read_body)
-  # url = URI('https://omgvamp-hearthstone-v1.p.rapidapi.com/cards')
-
-  # http = Net::HTTP.new(url.host, url.port)
-  # http.use_ssl = true
-  # http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-
-  # request = Net::HTTP::Get.new(url)
-  # request['x-rapidapi-host'] = 'omgvamp-hearthstone-v1.p.rapidapi.com'
-  # request['x-rapidapi-key'] = 'c15502ebd8msh183a4fdd23c6591p1954c4jsn302be1511f5b'
-
-  # response = http.request(request)
-  # puts 'PARSING JSON <<<<<<<<<'
-  # data = JSON.parse(response.read_body)
-  
- # binding.pry
 
   data.each do |_card_set_name, set_data|
     p "> Creating Set: #{_card_set_name}"
