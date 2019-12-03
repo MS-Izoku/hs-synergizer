@@ -24,19 +24,17 @@ if skip_fetch == false
   request["x-rapidapi-key"] = 'c15502ebd8msh183a4fdd23c6591p1954c4jsn302be1511f5b'
 
   response = http.request(request)
-  #puts response.read_body
-  puts PrettyJSON.new(response.read_body)
+  #puts PrettyJSON.new(response.read_body)
   
   data = JSON.parse(response.read_body)
 
   data.each do |_card_set_name, set_data|
     p "> Creating Set: #{_card_set_name}"
     my_set = CardSet.create(name: _card_set_name)
-    #binding.pry
     set_data.each do |card|
       new_card = Card.new
       new_card.name = card['name']
-      p ">> Creating Card: #{new_card.name}"
+      # p ">> Creating Card: #{new_card.name}"
       new_card.dbf_id = card['dbfId']
 
       new_card.cost = card['cost'].to_i
@@ -88,7 +86,6 @@ if skip_fetch == false
       my_artist ||= Artist.create(name: card['artist'])
       new_card.artist_id = my_artist.id
 
-      # UNTESTED
       case card
       when card['health'] != nil && card['attack'] != nil
         new_card.card_type "Minion"
@@ -98,8 +95,6 @@ if skip_fetch == false
         new_card.card_type = "Spell"
       end
       ">>>> Set Card Type to: #{new_card.card_type}"
-      # new_card.card_type = card_type
-      # UNTESTED END
 
       if card['mechanics']
         mechanics = card['mechanics']
@@ -130,6 +125,7 @@ if skip_fetch == false
 
 end
 
+# default descriptions from the Hearthstone Wiki
 Mechanic.all.each do |mechanic|
   mechanic.update(name: mechanic.name.downcase)
 end
@@ -159,10 +155,8 @@ Mechanic.find_by(name: "jade golem").update(description: "Summons a (1/1) Jade G
 Mechanic.find_by(name: "freeze").update(description: "A frozen character cannot attack this turn.")
 Mechanic.find_by(name: "echo").update(description: "A card that can be played multiple times from the hand, if the user has enough mana.")
 Mechanic.find_by(name: "deathrattle").update(description: "An effect that activates when a minion is destoyed, or otherwise triggered by another card")
-# Mechanic.find_by(name: "").update(description: "")
 
 
-# untested
 p ">> Deleting Useless Card Data"
 p ">>> Checking for Mechanically Named Cards (ex: 'Battlecry' , 'Rush')"
 Mechanic.all.each do |mechanic|

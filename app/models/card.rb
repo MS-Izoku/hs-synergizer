@@ -109,16 +109,14 @@ class Card < ApplicationRecord
   end
 
   def generate_keywords
-    # this will need to have asscociations created later on
-    # may need to be broken up into smaller functions
     all_keywords = {
       minions: [],
       tokens: []
     }
     plain_text = self.plain_text.downcase
 
-    # this is going to need to be its own function to make sure that everything works
-    # the phrases are tricky, since they also have contextual minion synergy
+
+    # this will be replaced with the parse_key_phrases when complete
     Card.key_phrases.each do |phrase|
       if plain_text.include?(phrase)
         all_keywords[phrase] = 1
@@ -171,7 +169,6 @@ class Card < ApplicationRecord
     Deck.key_phrases.each do |phrase|
       next unless text.include?(phrase)
 
-      # massive conditional bit here
       if phrase == 'if your deck has no duplicates'
         # CardMechanic.create(card_id: self.id , mechanic_id: Mechanic.find_or_create_by(name: ""))
         CardMechanic.create(card_id: self.id , mechanic_id: Mechanic.find_or_create_by(name: "singleton"))
@@ -185,7 +182,7 @@ class Card < ApplicationRecord
       elsif phrase == "your opponent's cards"
         CardMechanic.create(card_id: self.id , mechanic_id: Mechanic.find_or_create_by(name: "disruption"))
       elsif phrase == "if you played an elemental last turn"
-        
+
       else
         target_mechanic = Mechanic.find_by(name: phrase)
       end
