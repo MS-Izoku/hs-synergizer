@@ -7,8 +7,9 @@ require 'pretty_json'
 Mechanic.create(name: "Summon")
 Mechanic.create(name: "Choose One")
 Mechanic.create(name: "Passive")
+Mechanic.create(name: "Start of Game" , description: "Activates when the game starts, after your starting mulligan.")
 
-skip_fetch = true # Set this to false when you need to fetch
+skip_fetch = false # Set this to false when you need to fetch
 if skip_fetch == false
   puts 'Fetching Card Data <<<<<<'
 

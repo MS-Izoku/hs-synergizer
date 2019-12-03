@@ -103,6 +103,7 @@ ActiveRecord::Schema.define(version: 2019_12_01_010919) do
 
   create_table "mechanics", force: :cascade do |t|
     t.string "name"
+    t.string "tribe_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "description"

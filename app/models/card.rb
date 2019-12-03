@@ -173,15 +173,21 @@ class Card < ApplicationRecord
 
       # massive conditional bit here
       if phrase == 'if your deck has no duplicates'
-        all_keywords[:mechanics]['singleton'] = 1
+        # CardMechanic.create(card_id: self.id , mechanic_id: Mechanic.find_or_create_by(name: ""))
+        CardMechanic.create(card_id: self.id , mechanic_id: Mechanic.find_or_create_by(name: "singleton"))
       elsif phrase == 'return it to life'
-        all_keywords[:mechanics][:ressurect] = 1
+        CardMechanic.create(card_id: self.id , mechanic_id: Mechanic.find_or_create_by(name: "ressurect"))
       elsif phrase == 'if your deck is empty'
-        all_keywords[:mechanics][:empty_deck] = 1
+        CardMechanic.create(card_id: self.id , mechanic_id: Mechanic.find_or_create_by(name: "empty deck"))
       elsif phrase == "if you're holding a dragon"
-
+        tribe = Tribe.find_by(name: "Dragon")
+        CardMechanic.create(card_id: self.id , mechanic_id: Mechanic.find_or_create_by(name: "tribal" , tribal_synergy_id: tribe.id))
+      elsif phrase == "your opponent's cards"
+        CardMechanic.create(card_id: self.id , mechanic_id: Mechanic.find_or_create_by(name: "disruption"))
+      elsif phrase == "if you played an elemental last turn"
+        
       else
-        all_keywords[phrase] = 1
+        target_mechanic = Mechanic.find_by(name: phrase)
       end
 
       text.slice!(phrase)
@@ -191,17 +197,18 @@ class Card < ApplicationRecord
     all_keywords
   end
 
-  def check_for_minion_type_synergy(input_str, tribe_name)
-    Tribe.find_by(name: tribe_name) if input_str.include?(tribe_name)
+  def on_create
+    self.generate_keywords # find bolded / single-word keywords
+    self.parse_key_phrases # go though key phrases
   end
 
+  private
   def check_for_stats(input_str = plain_text)
     inp = input_str.downcase
     stat_hash = {}
     if inp.include?('/')
       slash_index = inp.index('/')
       p "Slash Index: #{slash_index}"
-      # stat_values = [inp[slash_index - 1].to_i, inp[slash_index + 1].to_i]
 
       stat_values = inp.scan(/\d+|\bone\b|two|three|four|five|six|seven|eight|nine|ten/)
       if stat_values.length > 2
@@ -213,78 +220,15 @@ class Card < ApplicationRecord
         stat_hash[:attack] = stat_values[0]
         stat_hash[:health] = stat_values[1]
       end
-
-      return stat_hash
     end
+
+    stat_hash
   end
 
-  # I may use this for something in the future
-  def key_phrase_hash
-    keywords = {
-      'if your deck has no duplicates' => [],
-      "your opponent's cards" => [],
-      'at the start of your turn' => [],
-      '50% chance to' => [],
-      'if your board is full of' => [],
-      'whenever you play' => [],
-      'after you' => [],
-      'each player' => [],
-      'reveal a' => [],
-      'for each' => [],
-      "if you're holding a spell that costs (5) or more" => [],
-      'if you have unspent mana at the end of your turn' => [],
-      'if you control' => [],
-      'it costs' => [],
-      'after you play' => [],
-      'after you cast' => [],
-      'targets chosen randomly' => [],
-      'split among' => [],
-      "set a minion's" => [],
-      'from your deck' => [],
-      'hero power' => [],
-      'return it to life' => [],
-      'after you summon a minion' => [],
-      'return a' => [],
-      'change each' => [],
-      'equip a' => [],
-      'casts when drawn' => [],
-      'summons when' => [],
-      "while you're" => [],
-      'your hero takes damage' => [],
-      'discard' => [],
-      'for the rest of the game' => [],
-      'whenever your hero attacks' => [],
-      'choose a' => [],
-      'if you have' => [],
-      'spell damage' => [],
-      'your spells cost' => [],
-      'your opponents spells cost' => [],
-      'copy a' => [],
-      'whenever this minion' => [],
-      "can't be targeted by spells or hero powers" => [],
-      'until your next turn' => [],
-      'take an extra turn' => [],
-      "fill each player's" => [],
-      'after this minion survives damage' => [],
-      'at the start your turn' => [],
-      'your minions with' => [],
-      'casts a random' => [],
-      'plays a random' => [],
-      'start the game' => [],
-      'if your deck is empty' => [],
-      'if you have no' => [],
-      'if your hand has no' => [],
-      'go dormant' => [],
-      'the first' => [],
-      'your first' => [],
-      'your cards that summon minions' => [],
-      "if you're holding a dragon" => [],
-      'if you played an elemental last turn' => []
-    }
-    keywords
+  def check_for_minion_type_synergy(input_str, tribe_name)
+    Tribe.find_by(name: tribe_name) if input_str.include?(tribe_name)
   end
 
-  private
 
   def word_split(phrase)
     phrase.split(' ')
