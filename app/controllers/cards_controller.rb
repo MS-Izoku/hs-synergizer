@@ -16,6 +16,16 @@ class CardsController < ApplicationController
     render json: CardSerializer.new(cards)
   end
 
+  def standard_cards_by_mechanic
+    cards = CardMechanic.where(mechanic_id: params[:id]).cards
+    render json: CardSerializer.new(cards)
+  end
+
+  def standard_spells
+    cards = CardSet.where(standard: true).cards.where(card_type: "Spell")
+    render json: CardSerializer.new(cards)
+  end
+
   def show
     card = Card.find_by(id: params[:id])
     if !card
