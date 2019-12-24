@@ -13,5 +13,5 @@ Rails.application.routes.draw do
 
   resources :mechanics, only: %i[index show]
   resources :cards , only: [:index , :show]
-  resourees :deck
+  resources :deck
 end
