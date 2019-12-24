@@ -19,5 +19,5 @@ class Mechanic < ApplicationRecord
 
   def self.cards_with_mechanic(mechanic_name)
     Mechanic.find_by(name: mechanic_name).cards
-    end
+  end
 end

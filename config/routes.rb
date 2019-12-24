@@ -4,4 +4,6 @@ Rails.application.routes.draw do
   get '/wild_cards' , to: 'cards#wild_cards'
 
   get '/cards/:id' , to: 'cards#show'
+
+  resources :mechanics , only: [:index , :show]
 end
