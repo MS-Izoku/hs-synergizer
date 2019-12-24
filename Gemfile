@@ -34,6 +34,7 @@ gem 'numbers_in_words', '~> 0.4.0' # easy to use number formatting (ex: "two" be
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 gem 'rack-cors'
+gem 'fast_jsonapi', '~> 1.1', '>= 1.1.1'
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
