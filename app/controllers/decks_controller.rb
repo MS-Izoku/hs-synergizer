@@ -5,7 +5,7 @@ class DecksController < ApplicationRecord
     
     def show
         deck = Deck.find_by(id: params[:id])
-        cards = Deck.
+        # cards = Deck.
         render json: DeckSerializer.new(deck , options)
     end
 end

@@ -31,7 +31,7 @@ class Card < ApplicationRecord
         temp.push(card)
       end
     end
-    temp
+    temp.to_a
   end
 
   def self.wild_cards

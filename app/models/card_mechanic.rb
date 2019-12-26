@@ -1,4 +1,4 @@
 class CardMechanic < ApplicationRecord
-    has_many :card_ids
-    has_many :mechanic_ids
+    belongs_to :card
+    belongs_to :mechanic
 end

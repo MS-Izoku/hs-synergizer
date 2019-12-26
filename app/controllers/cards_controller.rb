@@ -22,8 +22,12 @@ class CardsController < ApplicationController
   end
 
   def standard_spells
-    cards = CardSet.where(standard: true).cards.where(card_type: "Spell")
-    render json: CardSerializer.new(cards)
+    cards = Card.standard_cards
+    if !cards
+      render json: {error: "No Cards Found"} , status: 404
+    else
+      render json: cards
+    end
   end
 
   def show

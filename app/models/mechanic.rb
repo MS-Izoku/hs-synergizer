@@ -4,8 +4,8 @@ class Mechanic < ApplicationRecord
   has_many :card_mechanics
   has_many :cards, through: :card_mechanics
 
-  has_many :deck_mechanics
-  has_many :decks, through: :deck_mechanics
+  #has_many :deck_mechanics
+  #has_many :decks, through: :deck_mechanics
 
   def self.names(show_in_console = false)
     temp = []
