@@ -4,14 +4,15 @@ require 'openssl'
 require 'pry'
 require 'pretty_json'
 
-Mechanic.create(name: "Summon")
-Mechanic.create(name: "Choose One")
-Mechanic.create(name: "Passive")
+Mechanic.create(name: "Summon" , description: 'Summon a / a number of minions')
+Mechanic.create(name: "Choose One" , description: "A choice between 2 effects")
+Mechanic.create(name: "Passive" , description: "Always active once applied")
 Mechanic.create(name: "Start of Game" , description: "Activates when the game starts, after your starting mulligan.")
 
 skip_fetch = false # Set this to false when you need to fetch
 if skip_fetch == false
-  puts 'Fetching Card Data <<<<<<'
+  puts '(Initializing Seed) Fetching Card Data <<<<<<'
+  puts "..."
 
   url = URI("https://omgvamp-hearthstone-v1.p.rapidapi.com/cards")
 
@@ -24,17 +25,16 @@ if skip_fetch == false
   request["x-rapidapi-key"] = 'c15502ebd8msh183a4fdd23c6591p1954c4jsn302be1511f5b'
 
   response = http.request(request)
-  #puts PrettyJSON.new(response.read_body)
   
   data = JSON.parse(response.read_body)
 
   data.each do |_card_set_name, set_data|
-    p "> Creating Set: #{_card_set_name}"
     my_set = CardSet.create(name: _card_set_name)
+    p "(CardSet)> Creating Set: #{my_set.name}"
     set_data.each do |card|
-      new_card = Card.new
+      new_card = Card.create()
       new_card.name = card['name']
-      # p ">> Creating Card: #{new_card.name}"
+      p "(Card: #{new_card.name})>> Creating Card: #{new_card.name}"
       new_card.dbf_id = card['dbfId']
 
       new_card.cost = card['cost'].to_i
@@ -86,6 +86,7 @@ if skip_fetch == false
       my_artist ||= Artist.create(name: card['artist'])
       new_card.artist_id = my_artist.id
 
+      # <<<<<<< DETERMINING CARD TYPE (ie: "Spell" , "Minion" , "Weapon")
       case card
       when card['health'] != nil && card['attack'] != nil
         new_card.card_type "Minion"
@@ -94,28 +95,29 @@ if skip_fetch == false
       else
         new_card.card_type = "Spell"
       end
-      ">>>> Set Card Type to: #{new_card.card_type}"
+      "(Card)>>>> Set Card Type to: #{new_card.card_type}"
 
+      #<<<<<< MECHANICS SECTION
+      # mechanics needs to work
       if card['mechanics']
-        mechanics = card['mechanics']
-        mechanics.each do |mechanic|
-          temp_mechanic = Mechanic.find_by(name: mechanic['name'])
+        mechanics = card['mechanics'][0]
+        mechanics.each do |key , mechanic|
+         # byebug
+          temp_mechanic = Mechanic.find_by(name: mechanic)
           if temp_mechanic.nil?
-            if mechanic['name'] != nil
-                temp_mechanic = Mechanic.create(name: mechanic['name'])
-            else
-                temp_mechanic = Mechanic.create(name: mechanic['name'])
-            end
-            m_name = mechanic['name']
-            p ">>> Creating Mechanic: #{m_name}"
+            temp_mechanic = Mechanic.create(name: mechanic)
+            p "(Mechanic)>>> Creating New Mechanic: #{temp_mechanic.name}"
           end
-          CardMechanic.create(mechanic_id: temp_mechanic.id, card_id: new_card.id)
+
+          new_card_mechanic = CardMechanic.create(mechanic_id: temp_mechanic.id, card_id: new_card.id)
+          p "(Card-Mechanic)>>> Creating new Card Mechanic with Card##{new_card.id}(#{new_card.name}) and Mechanic##{temp_mechanic.id} (#{temp_mechanic.name})"
         end
 
     else
         vanilla = Mechanic.find_by(name: "Vanilla")
         vanilla ||= Mechanic.create(name: "Vanilla")
         CardMechanic.create(mechanic_id: vanilla.id , card_id: new_card.id)
+        p "(Card-Mechanic)>>> Vanilla Mechanic Created"
     end
 
       new_card.card_set_id = my_set.id
