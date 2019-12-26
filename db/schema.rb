@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_11_24_010049) do
+ActiveRecord::Schema.define(version: 2019_12_09_040059) do
 
   create_table "artists", force: :cascade do |t|
     t.string "name"
@@ -37,6 +37,7 @@ ActiveRecord::Schema.define(version: 2019_11_24_010049) do
     t.integer "mechanic_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "cost_change"
   end
 
   create_table "card_sets", force: :cascade do |t|
@@ -92,7 +93,7 @@ ActiveRecord::Schema.define(version: 2019_11_24_010049) do
     t.integer "creator_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "player_class_id"
+    t.integer "player_class_id", default: 0
   end
 
   create_table "keywords", force: :cascade do |t|
@@ -103,8 +104,11 @@ ActiveRecord::Schema.define(version: 2019_11_24_010049) do
 
   create_table "mechanics", force: :cascade do |t|
     t.string "name"
+    t.string "tribe_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "description"
+    t.boolean "is_buff", default: false
   end
 
   create_table "player_classes", force: :cascade do |t|
