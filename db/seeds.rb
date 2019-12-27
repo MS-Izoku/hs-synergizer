@@ -9,7 +9,7 @@ Mechanic.create(name: "Choose One" , description: "A choice between 2 effects")
 Mechanic.create(name: "Passive" , description: "Always active once applied")
 Mechanic.create(name: "Start of Game" , description: "Activates when the game starts, after your starting mulligan.")
 
-skip_fetch = false # Set this to false when you need to fetch
+skip_fetch = true # Set this to false when you need to fetch
 if skip_fetch == false
   puts '(Initializing Seed) Fetching Card Data <<<<<<'
   puts "..."
@@ -98,9 +98,9 @@ if skip_fetch == false
       "(Card)>>>> Set Card Type to: #{new_card.card_type}"
 
       #<<<<<< MECHANICS SECTION
-      # mechanics needs to work
       if card['mechanics']
-        mechanics = card['mechanics'][0]
+        #byebug if card['name'] == "Zilliax"
+        mechanics = card['mechanics'][0] # this line needs to change, check the structure of each one if need be
         mechanics.each do |key , mechanic|
          # byebug
           temp_mechanic = Mechanic.find_by(name: mechanic)
@@ -117,14 +117,25 @@ if skip_fetch == false
         vanilla = Mechanic.find_by(name: "Vanilla")
         vanilla ||= Mechanic.create(name: "Vanilla")
         CardMechanic.create(mechanic_id: vanilla.id , card_id: new_card.id)
-        p "(Card-Mechanic)>>> Vanilla Mechanic Created"
+        p "(Card-Mechanic)>>> #{new_card.name} is Vanilla"
     end
 
       new_card.card_set_id = my_set.id
       new_card.save
     end
   end
+end
 
+p "Initial Seed Complete"
+p "(Card)>>> Initializing Card Keyword Parsing"
+Card.all.each do |card|
+  plain_text = card.plain_text
+  Mechanic.all.each do |mechanic|
+    if plain_text.include?(mechanic.name)
+      CardMechanic.find_or_create_by(mechanic_id: mechanic.id , card_id: card.id)
+      p "(Card)>>> Linking --#{mechanic.name}-- to: #{card.name}"
+    end
+  end
 end
 
 # default descriptions from the Hearthstone Wiki
@@ -157,10 +168,10 @@ Mechanic.find_by(name: "jade golem").update(description: "Summons a (1/1) Jade G
 Mechanic.find_by(name: "freeze").update(description: "A frozen character cannot attack this turn.")
 Mechanic.find_by(name: "echo").update(description: "A card that can be played multiple times from the hand, if the user has enough mana.")
 Mechanic.find_by(name: "deathrattle").update(description: "An effect that activates when a minion is destoyed, or otherwise triggered by another card")
-
+Mechanic.find_by(name: "invoke").update(description: "Activate your classes Galakrond Hero Power and upgrade the Galakrond Hero Card")
 
 p ">> Deleting Useless Card Data"
-p ">>> Checking for Mechanically Named Cards (ex: 'Battlecry' , 'Rush')"
+p "(Data Check)>>> Checking for Mechanically Named Cards (ex: 'Battlecry' , 'Rush')"
 Mechanic.all.each do |mechanic|
   Card.all.each do |card|
     if(card.name == mechanic.name)
@@ -171,7 +182,7 @@ Mechanic.all.each do |mechanic|
   end
 end
 
-p ">> Adjusting Cardset Data"
+p "(Data Check)>> Adjusting Cardset Data"
 # Adding Years and Standard-Play to CardSets
 CardSet.find_by(name: 'Basic').update(year: 2014, standard: true)
 CardSet.find_by(name: 'Classic').update(year: 2014, standard: true)
@@ -196,7 +207,7 @@ CardSet.find_by(name: 'Descent of Dragons').update(year: 2019, standard: true)
 CardSet.find_by(name: 'Wild Event').update(year: 2019, standard: true)
 
 # Manual Setup for DeckBuilding
-p ">> Setting Up PlayerClass DBFID's"
+p "(PlayerClass)>> Setting Up PlayerClass DBFID's"
 PlayerClass.find_by(name: "Mage").update(dbf_id: 637)
 PlayerClass.find_by(name: "Warrior").update(dbf_id: 7)
 PlayerClass.find_by(name: "Hunter").update(dbf_id: 31)
@@ -208,3 +219,5 @@ PlayerClass.find_by(name: "Druid").update(dbf_id: 274)
 PlayerClass.find_by(name: "Rogue").update(dbf_id: 930)
 
 # Generate Synergies in Standard Cards
+
+p "(Seed)> Seeding Complete"
