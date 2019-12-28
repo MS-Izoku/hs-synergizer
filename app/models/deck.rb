@@ -5,6 +5,10 @@ class Deck < ApplicationRecord
   has_many :cards, through: :deck_cards
   belongs_to :player_class
 
+  def self.deck_creation_test
+    Deck.generate_cards_from_code(Deck.decode(Deck.test_code))
+  end
+
   def self.test_code
     'AAECAQcOnwP8BJAH+wz09QKS+AKO+wKz/AKggAOGnQPyqAOftwPj0gPn0gMIS6IE/wed8AKb8wKe+wKfoQOhoQMA'
   end
@@ -46,6 +50,7 @@ class Deck < ApplicationRecord
   def self.generate_cards_from_code(decoded_deck_code)
     temp_deck = []
     decoded_deck_code[:cards].each do |card|
+      puts "Duplicate Found" if card[1] == 2
       temp_deck.push(Card.find_by(dbf_id: card))
     end
     temp_deck
@@ -59,16 +64,9 @@ class Deck < ApplicationRecord
 
     new_deck = Deck.new
     deck_from_code = Deck.decode(encoded_deck_code)
-    # p deck_from_code
-    # p "<<<<<<<<<"
     deck_cards = Deck.generate_cards_from_code(deck_from_code)
-
     deck_class = PlayerClass.find_by(dbf_id: deck_from_code[:heroes])
-    # p deck_class
-    # p "<<<<<<<<<<<<"
-
-    # get the Player class deck-code identifier to use in the deck creating method
-
+    nil
   end
 
   # cards should be a hash, player class is a string
