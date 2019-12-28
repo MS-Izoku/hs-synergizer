@@ -16,6 +16,6 @@ Rails.application.routes.draw do
   resources :keyword , only: [:index , :show]
   
   resources :deck , except: [:index , :edit , :new]
-  resources :tribe , except: [:new , :create , :update , :edit]
+  #resources :tribe , except: [:new , :create , :update , :edit]
 
 end
