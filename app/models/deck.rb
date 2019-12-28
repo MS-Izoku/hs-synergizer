@@ -9,6 +9,34 @@ class Deck < ApplicationRecord
     'AAECAQcOnwP8BJAH+wz09QKS+AKO+wKz/AKggAOGnQPyqAOftwPj0gPn0gMIS6IE/wed8AKb8wKe+wKfoQOhoQMA'
   end
 
+  def create_card_asscociation(card_hash)
+    # this needs to be able to incorporate stuff form the dbf_ids since it tracks duplicates
+  end
+
+  def order_cards
+    sorted_cards = { result: [] }
+    self.cards.each do |card|
+      sorted_cards[card.mana_cost] ||= []
+      sorted_cards[card.mana_cost].push(card)
+    end
+
+    sorted_cards.each { |card_set|
+      card_set.sort { |card_a , card_b| card_a.name <=> card_b.name }
+      sorted_cards[:results].push(card_set)
+    }
+    p sorted_cards[:results].flatten
+  end
+
+  def change_cards(updated_deck_code)
+    temp_cards = generate_cards_from_code(updated_deck_code)
+    current_cards = generate_cards_from_code(self.deck_code)
+    if temp_cards != current_cards
+
+      return new_card_hash
+    else return false
+    end
+  end
+
   # returns a hash of deck code data with DBFID's
   def self.decode(deck_code)
     code = Deckstrings.decode(deck_code)
@@ -19,7 +47,6 @@ class Deck < ApplicationRecord
     temp_deck = []
     decoded_deck_code[:cards].each do |card|
       temp_deck.push(Card.find_by(dbf_id: card))
-      #p Card.find_by(dbf_id: card)
     end
     temp_deck
   end
