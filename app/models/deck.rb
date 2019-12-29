@@ -17,6 +17,16 @@ class Deck < ApplicationRecord
     # this needs to be able to incorporate stuff form the dbf_ids since it tracks duplicates
   end
 
+  def self.new_create_deck_from_code(deck_code)
+    p "DECK CODE:"
+    parsed_deck_code = Deck.decode(deck_code)
+    p parsed_deck_code
+    is_standard_deck = (parsed_deck_code[:format] == 2)
+    pc = PlayerClass.find_by(dbf_id: parsed_deck_code[:heroes][0])
+    
+    temp_deck = Deck.find_or_create_by(deck_code: deck_code, standard: is_standard_deck , player_class_id: pc.id)
+  end
+
   def order_cards
     sorted_cards = { result: [] }
     self.cards.each do |card|

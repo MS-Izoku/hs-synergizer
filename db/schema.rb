@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_09_040059) do
+ActiveRecord::Schema.define(version: 2019_12_29_205116) do
 
   create_table "artists", force: :cascade do |t|
     t.string "name"
@@ -78,6 +78,7 @@ ActiveRecord::Schema.define(version: 2019_12_09_040059) do
     t.integer "card_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "duplicates"
   end
 
   create_table "deck_mechanics", force: :cascade do |t|
@@ -94,6 +95,8 @@ ActiveRecord::Schema.define(version: 2019_12_09_040059) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "player_class_id", default: 0
+    t.boolean "duplicates"
+    t.boolean "standard"
   end
 
   create_table "keywords", force: :cascade do |t|
