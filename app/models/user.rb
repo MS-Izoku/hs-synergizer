@@ -3,24 +3,18 @@
 class User < ApplicationRecord
   has_secure_password
 
+    # need to handle error validation for this end, might do that on the front-end
+    PASSWORD_REQUIREMENTS = /\A
+    (?=.{8,50}) # length-check , might be unrealistically long
+    (?=.*\d) # digit-check
+    (?=.*[a-z]) # lower-case check
+    (?=.*[A-Z]) # capital check
+    (?=.[[:^alnum:]]) # symbol check
+    /x.freeze
+
   validates_format_of :email, with: Devise.email_regexp
   validates :username, uniqueness: true, length: { in: 6..20 }
-  validates :password, legnth: { in: 6..20 }
-  validate :validate_password_regex
+  validates :password, length: { in: 6..20 }, format: PASSWORD_REQUIREMENTS
 
-  def validate_password_regex
-    unless password.include?('special character') # regex to get special characters
-      errors.add(:password, 'Password Needs at Least 1 special character')
-    end
-    unless password.include?('number') # regex to get digits
-      errors.add(:password, 'Password needs to contain at least 1 number')
-    end
-    unless password.include?('capital_letter') # regex to get capital letters
-      errors.add(:password, 'Password needs to contain at least 1 capital letter')
-    end
-    unless password.include?('lower_case_letter') # regex to get lower-case letters
-      errors.add(:password, 'Password needs to contain at least 1 lower-case letter')
-    end
-  end
-  
+
 end
