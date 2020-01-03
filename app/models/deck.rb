@@ -3,6 +3,8 @@ require 'deckstrings'
 class Deck < ApplicationRecord
   has_many :deck_cards
   has_many :cards, through: :deck_cards
+  has_many :saved_decks
+  has_many :users , through: :saved_decks
   belongs_to :player_class
 
   def self.deck_creation_test
