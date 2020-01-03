@@ -11,6 +11,7 @@ class Deck < ApplicationRecord
     Deck.generate_cards_from_code(Deck.decode(Deck.test_code))
   end
 
+  # delete this before delpoyment
   def self.test_code
     'AAECAQcOnwP8BJAH+wz09QKS+AKO+wKz/AKggAOGnQPyqAOftwPj0gPn0gMIS6IE/wed8AKb8wKe+wKfoQOhoQMA'
   end
@@ -49,6 +50,7 @@ class Deck < ApplicationRecord
     p sorted_cards[:results].flatten
   end
 
+  # need to find a use for this, might just be in the update method in the controller
   def change_cards(updated_deck_code)
     temp_cards = generate_cards_from_code(updated_deck_code)
     current_cards = generate_cards_from_code(deck_code)
