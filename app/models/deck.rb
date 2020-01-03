@@ -25,6 +25,18 @@ class Deck < ApplicationRecord
     pc = PlayerClass.find_by(dbf_id: parsed_deck_code[:heroes][0])
     
     temp_deck = Deck.find_or_create_by(deck_code: deck_code, standard: is_standard_deck , player_class_id: pc.id)
+    parsed_deck_code[:cards].collect do |card , card_count|
+      #p card
+      temp_card = Card.find_by(dbf_id: card)
+      #temp_card
+      deck_inclusion = DeckCard.find_by(card_id: temp_card.id , deck_id: temp_deck.id)
+      if !deck_inclusion
+        has_duplicates = (card_count == 2)
+        DeckCard.create(card_id: temp_card.id , deck_id: temp_deck.id , duplicates: has_duplicates)
+      end
+    end
+
+    temp_deck
   end
 
   def order_cards
