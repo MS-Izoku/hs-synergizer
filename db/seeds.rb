@@ -4,6 +4,8 @@ require 'openssl'
 require 'pry'
 require 'pretty_json'
 
+User.create(username: "cornjulio" , password: "password" , email: "email@gmail.com")
+
 Mechanic.create(name: "Summon")
 Mechanic.create(name: "Choose One")
 Mechanic.create(name: "Passive")
