@@ -8,19 +8,24 @@ class DecksController < ApplicationRecord
   end
 
   def create
-    # requires an array of dbf_ids
-    deck = Deck.find_by(id: params[:id])
-    options = {}
-    if deck.nil?
-      render json: { error: 'Deck Not Found' }, status: 404
+    deck = Deck.new
+
+    options = {
+      include: %i[cards player_class]
+    }
+    if deck.save
+      render DeckSerializer.new(deck, options)
     else
-      render json: DeckSerializer.new(deck, options)
-      end
+      render json: {error: "Deck was unable to be created"} , status: 400
+    end
   end
 
-  def update
-
+  def create_from_deck_code
+    deck = Deck.new_create_deck_from_code(params[:deck_code])
+    render json: DeckSerializer.new(deck, options)
   end
+
+  def update; end
 
   def delete
     deck = Deck.find_by(id: params[:id])
@@ -33,6 +38,11 @@ class DecksController < ApplicationRecord
   end
 
   private
+
+  def deck_options
+    { include: %i[cards player_class] }
+  end
+
   def deck_params
     params.require(:deck).permit(:deck_code)
   end
