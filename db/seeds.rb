@@ -4,6 +4,9 @@ require 'openssl'
 require 'pry'
 require 'pretty_json'
 
+skip_fetch = false # Set this to false when you need to fetch
+show_creation_in_console = false
+
 User.create(username: "cornjulio" , password: "password" , email: "email@gmail.com")
 
 Mechanic.create(name: "Summon")
@@ -11,7 +14,7 @@ Mechanic.create(name: "Choose One")
 Mechanic.create(name: "Passive")
 Mechanic.create(name: "Start of Game" , description: "Activates when the game starts, after your starting mulligan.")
 
-skip_fetch = false # Set this to false when you need to fetch
+
 if skip_fetch == false
   puts 'Fetching Card Data <<<<<<'
 
@@ -31,12 +34,15 @@ if skip_fetch == false
   data = JSON.parse(response.read_body)
 
   data.each do |_card_set_name, set_data|
-    p "> Creating Set: #{_card_set_name}"
+    p "> Creating Set: #{_card_set_name}" if show_creation_in_console
+    
     my_set = CardSet.create(name: _card_set_name)
     set_data.each do |card|
       new_card = Card.new
       new_card.name = card['name']
-      # p ">> Creating Card: #{new_card.name}"
+      
+      p ">> Creating Card: #{new_card.name}"  if show_creation_in_console
+      
       new_card.dbf_id = card['dbfId']
 
       new_card.cost = card['cost'].to_i
@@ -96,7 +102,7 @@ if skip_fetch == false
       else
         new_card.card_type = "Spell"
       end
-      ">>>> Set Card Type to: #{new_card.card_type}"
+      p ">>>> Set Card Type to: #{new_card.card_type}"  if show_creation_in_console
 
       if card['mechanics']
         mechanics = card['mechanics']
@@ -109,7 +115,7 @@ if skip_fetch == false
                 temp_mechanic = Mechanic.create(name: mechanic['name'])
             end
             m_name = mechanic['name']
-            p ">>> Creating Mechanic: #{m_name}"
+            p ">>> Creating Mechanic: #{m_name}" if show_creation_in_console
           end
           CardMechanic.create(mechanic_id: temp_mechanic.id, card_id: new_card.id)
         end
@@ -170,6 +176,8 @@ Mechanic.all.each do |mechanic|
     end
   end
 end
+
+Card.where()
 
 p ">> Adjusting Cardset Data"
 # Adding Years and Standard-Play to CardSets

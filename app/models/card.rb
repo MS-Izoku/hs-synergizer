@@ -20,6 +20,20 @@ class Card < ApplicationRecord
     card_set.standard
   end
 
+  def self.zilliax
+    Card.find_by(name: "Zilliax" , cost: 5)
+  end
+
+  def self.brann
+    Card.find_by(name: "Dinotamer Brann" , cost: 7)
+  end
+
+  def list_mechanics
+    self.mechanics.each do |mechanic|
+      p mechanic.name
+    end
+  end
+
   def self.all_cards # Card.all gives some useless cards
     Card.where.not(collectable: nil)
   end
@@ -80,20 +94,15 @@ class Card < ApplicationRecord
 
   # this should not live here, not in this class
   def plain_text
-    # needs optomization, not dry enough
     text = Nokogiri::HTML(card_text).text
     temp_str = ''
 
-    p text
-    # Something is happening here that is causing issues splitting up the string
     text.split('[x]').reject { |str| str == '' }.each { |str| temp_str += str }
     text = temp_str
-    p temp_str
 
     temp_str = ''
     text.split(':').reject { |str| str == '' }.each { |str| temp_str += str }
     text = temp_str
-    p temp_str
 
     text = text.split('\\n')
     temp_str = ''
@@ -102,7 +111,6 @@ class Card < ApplicationRecord
       temp_str += str
     end
     text = temp_str
-    p temp_str
 
     text = text.sub! '_', ' ' # underscores sometimes come in with certain token/stat cards
 
@@ -112,40 +120,28 @@ class Card < ApplicationRecord
   def generate_keywords
     all_keywords = {
       minions: [],
-      tokens: []
+      tokens: [],
+      mechanics: [],
     }
 
-    plain_text = self.plain_text.downcase
-
-    # this will be replaced with the parse_key_phrases when complete
-    # Card.key_phrases.each do |phrase|
-    #   if plain_text.include?(phrase)
-    #     all_keywords[phrase] = 1
-    #     plain_text.slice!(phrase)
-    #   else next
-    #   end
-    # end
-    parse_key_phrases
-    # parse_key_phrases
+    pt = self.plain_text.downcase
 
     Mechanic.names.each do |mechanic|
-      if plain_text.include?(" #{mechanic.downcase}") || plain_text.include?("#{mechanic.downcase} ")
-        all_keywords[mechanic] = 1
-        plain_text.slice!(mechanic)
-      end
+      next unless pt.include?(" #{mechanic.downcase}") || pt.include?("#{mechanic.downcase} ")
+      p mechanic.downcase
+      all_keywords[:mechanics].push(mechanic)
+      pt.slice!(mechanic.downcase)
     end
 
     Card.names.each do |name|
-      next unless plain_text.include?(name.downcase)
+      next unless pt.include?(" #{name.downcase}") || pt.include?("#{name.downcase} ")
 
-      p Card.where(name: name)
+      p Card.find_by(name: name).name
       all_keywords[:minions].push(name)
-      plain_text.slice!(name)
+      pt.slice!(name)
     end
-
-    p plain_text
-    p check_for_stats
-    all_keywords
+    pt
+    #all_keywords
   end
 
   def self.key_phrases
@@ -394,7 +390,9 @@ class Card < ApplicationRecord
         puts "Phrase --#{phrase}-- not found"
         next
       end
+
       all_keywords[:remaining_plain_text].slice!(phrase)
+      p all_keywords[:remaining_plain_text]
     end
 
     all_keywords
