@@ -1,6 +1,9 @@
 class SavedDecksController < ApplicationController
   def create
-    render json: {message: "Deck Creation Success"} , status: :created unless check_for_deck.nil?
+    if check_for_deck.nil?
+      render json: {message: "Error Saving Deck"} , status: 400
+    end
+    render json: {message: "Deck Creation Success"} , status: :created
   end
 
   def delete
@@ -14,7 +17,7 @@ class SavedDecksController < ApplicationController
 
   private
   def check_for_deck
-    user = User.find_by(id: params[:user_id])
+    user = User.find_by(id: current_user.id)
     deck = Deck.find_by(id: params[:deck_id])
     if user && deck && !SavedDeck.find_by(user_id: user.id , deck_id: deck.id).nil?
       saved_deck = SavedDeck.create(user_id: user.id , deck_id: deck.id)
