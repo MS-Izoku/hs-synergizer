@@ -218,10 +218,10 @@ class Card < ApplicationRecord
 
   def self.kw_targets
     {
-      self: %w[you your],
+      self: ["you" , "your" , "you're"],
       opponent: ['opponent', "opponent's"],
       both: ['each player', 'both players'],
-      deck: %w[deck decks]
+      deck: ["deck" , "decks"]
     }
   end
 
@@ -232,7 +232,7 @@ class Card < ApplicationRecord
   end
 
   def self.core_mechanics
-    %w[draw play]
+    ["draw" , "play"]
   end
 
   def self.kw_stats
@@ -245,11 +245,13 @@ class Card < ApplicationRecord
 
   def self.kw_effect_timing
     {
-      start_or_turn: [],
-      end_of_turn: [],
+      start_of_turn: ["at the start of your turn"],
+      end_of_turn: ["at the end of your turn" , "when your turn ends"],
       on_draw: ['casts when drawn', 'draw a card'],
       start_of_game: ['start of game'],
-      end_of_game: ['end of game']
+      end_of_game: ['end of game'],
+      on_play: ["battlecry"],
+      on_death: ["deathrattle"]
     }
   end
 
@@ -260,7 +262,8 @@ class Card < ApplicationRecord
   # parse through sentence to find conditional phrase
   def self.find_condition(sentence)
     condition = {
-      plain_text: "",
+      plain_text: sentence,
+      conditional: "",
       timing: "",
       target: "",
       action: "",
@@ -270,14 +273,38 @@ class Card < ApplicationRecord
 
     sentence = sentence.split(" ")
     p sentence
+    
+    # go through conditionals
+    Card.kw_conditionals.each_with_index do |conditional , index|
+      if sentence.include?(conditional)
+        condition[:conditional] = conditional
+        break
+      end
+    end
 
-    sentence.collect do |word|
-      # check if the word is in the Card.kw_conditional array
+    # go through possible targets for the conditonal (ie: you or your opponent , maybe deck)
+    Card.kw_targets.each do |target_type , target_type_words|
+      target_type_words.each do |word|
+        if sentence.include?(word)
+          condition[:target] = target_type.to_s
+          break
+        end
+      end
+    end
+
+    Card.kw_effect_timing.each do |timing_key , timing_key_arr|
+      timing_key_arr.each do |word|
+        if condition[:plain_text].include?(word)
+          puts word
+          break
+        end
+      end
     end
 
     condition
   end
 
+  # split off sentences to parse through each
   def split_sentences
     sentences = self.plain_text.split(".")
     while sentences.include?(" ") do
