@@ -148,7 +148,14 @@ class Card < ApplicationRecord
     all_keywords
   end
 
-  def self.key_phrases
+
+  def self.kw_effects
+    {
+
+    }
+  end
+
+  def self.key_phrases # need to split these out
     [
       '50% chance to',
       'after this minion survives damage',
@@ -221,18 +228,28 @@ class Card < ApplicationRecord
       self: ["you" , "your" , "you're"],
       opponent: ['opponent', "opponent's"],
       both: ['each player', 'both players'],
-      deck: ["deck" , "decks"]
+      deck: ["deck" , "decks"],
+      minion: ["minion" , "minions"]
     }
   end
 
-  def self.kw_effects
+  def self.kw_actions
     {
-
+      control: ["control"],
+      hold: ["holding" , "hold"],
+      attack: ["attack"],
+      damage: ["damage" , "damaged" , "damage"]
     }
   end
+
 
   def self.core_mechanics
-    ["draw" , "play"]
+    {
+      draw: ["draw" , "draws" , "drawn"],
+      play: ["play" , "plays" , "played"],
+      attack: ["attack" , "attacks"],
+      survives_damage: ["survives"]
+    }
   end
 
   def self.kw_stats
@@ -251,7 +268,8 @@ class Card < ApplicationRecord
       start_of_game: ['start of game'],
       end_of_game: ['end of game'],
       on_play: ["battlecry"],
-      on_death: ["deathrattle"]
+      on_death: ["deathrattle"],
+      this_turn: ["this turn"]
     }
   end
 
@@ -274,11 +292,23 @@ class Card < ApplicationRecord
     sentence = sentence.split(" ")
     p sentence
     
-    # go through conditionals
-    Card.kw_conditionals.each_with_index do |conditional , index|
+
+    # need to dry this up
+    # go through conditionals , this will need to be the basis for everything in the method
+    # each conditional will need it's own method inside of here, but this works for SOME cards to start this out
+    Card.kw_conditionals.each do |conditional|
       if sentence.include?(conditional)
         condition[:conditional] = conditional
         break
+      end
+    end
+
+    Card.kw_effect_timing.each do |timing_key , timing_key_arr|
+      timing_key_arr.each do |word|
+        if condition[:plain_text].include?(word)
+          condition[:timing] = timing_key.to_s
+          break
+        end
       end
     end
 
@@ -292,10 +322,29 @@ class Card < ApplicationRecord
       end
     end
 
-    Card.kw_effect_timing.each do |timing_key , timing_key_arr|
-      timing_key_arr.each do |word|
-        if condition[:plain_text].include?(word)
-          puts word
+    Card.kw_actions.each do |action_key , action_words|
+      action_words.each do |word|
+        if sentence.include?(word)
+          condition[:action] = action_key.to_s
+          break
+        end
+      end
+    end
+
+    # do I need a seperate target hash for this?
+    Card.kw_targets.each do |target_type , target_type_words|
+      target_type_words.each do |word|
+        if sentence.include?(word)
+          condition[:action_target] = target_type.to_s
+          break
+        end
+      end
+    end
+
+    Card.kw_effects.each do |effect_type , effect_type_words|
+      effect_type_words.each do |word|
+        if sentence.include?(word)
+          condition[:effect] = target_type.to_s
           break
         end
       end
@@ -319,10 +368,6 @@ class Card < ApplicationRecord
       arr.delete_at(ind)
     end
     arr
-  end
-
-  def self.kw_actions
-    %w[holding played attack]
   end
 
   # used for sorting out keywords when a new one is added
