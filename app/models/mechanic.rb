@@ -17,7 +17,8 @@ class Mechanic < ApplicationRecord
     temp.sort!
   end
 
-  def self.cards_with_mechanic(mechanic_name)
-    Mechanic.find_by(name: mechanic_name).cards
+  def self.cards_with_mechanic(mechanic_name , standard)
+    mechanic = Mechanic.find_by(name: mechanic_name)
+    Card.joins(:card_mechanics , :card_set).where(cards_mechanics: {mechanic_id: mechanic.id} , card_sets:{standard: standard})
   end
 end
