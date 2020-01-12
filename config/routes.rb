@@ -20,7 +20,9 @@ Rails.application.routes.draw do
   resources :mechanics, only: %i[index show]
   resources :keyword , only: [:index , :show]
   
-  resources :deck , except: [:index , :edit , :new]
+  resources :deck , except: [:index , :update , :create]
+
+  resources :saved_deck , only: [:create , :delete]
   #resources :tribe , except: [:new , :create , :update , :edit]
 
 end
