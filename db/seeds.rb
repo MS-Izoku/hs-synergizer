@@ -6,12 +6,12 @@ require 'openssl'
 require 'pry'
 require 'pretty_json'
 
-Mechanic.create(name: 'Summon', description: 'Summon a / a number of minions')
-Mechanic.create(name: 'Choose One', description: 'A choice between 2 effects')
-Mechanic.create(name: 'Passive', description: 'Always active once applied')
-Mechanic.create(name: 'Start of Game', description: 'Activates when the game starts, after your starting mulligan.')
+Mechanic.find_or_create_by(name: 'Summon', description: 'Summon a / a number of minions')
+Mechanic.find_or_create_by(name: 'Choose One', description: 'A choice between 2 effects')
+Mechanic.find_or_create_by(name: 'Passive', description: 'Always active once applied')
+Mechanic.find_or_create_by(name: 'Start of Game', description: 'Activates when the game starts, after your starting mulligan.')
 
-skip_fetch = true # Set this to false when you need to fetch
+skip_fetch = false # Set this to false when you need to fetch
 if skip_fetch == false
   puts '(Initializing Seed) Fetching Card Data <<<<<<'
   puts '...'
@@ -87,14 +87,28 @@ if skip_fetch == false
       new_card.artist_id = my_artist.id
 
       # <<<<<<< DETERMINING CARD TYPE (ie: "Spell" , "Minion" , "Weapon")
-      case card
-      when !card['health'].nil? && !card['attack'].nil?
-        new_card.card_type 'Minion'
-      when !card['durability'].nil? && !card['attack'].nil?
-        new_card.card_type 'Weapon'
+      if card['type'] != 'Minion'
+        if card['type'] == 'Spell'
+          # binding.pry
+          new_card.card_type = 'Spell'
+        elsif card['type'] == 'Weapon'
+          # binding.pry
+          new_card.card_type = 'Weapon'
+          new_card.durability = card['durability']
+        end
+
       else
-        new_card.card_type = 'Spell'
+        new_card.card_type = 'Minion'
       end
+      puts "Setting #{new_card.name} to type: #{new_card.card_type}"
+      # case card
+      # when !card['health'].nil?
+      #   new_card.card_type 'Minion'
+      # when !card['durability'].nil? && !card['attack'].nil?
+      #   new_card.card_type 'Weapon'
+      # else
+      #   new_card.card_type = 'Spell'
+      # end
       "(Card)>>>> Set Card Type to: #{new_card.card_type}"
 
       # <<<<<< MECHANICS SECTION
@@ -132,7 +146,8 @@ Card.all.each do |card|
   plain_text = card.plain_text
   Mechanic.all.each do |mechanic|
     if plain_text.include?(mechanic.name)
-      CardMechanic.find_or_create_by(mechanic_id: mechanic.id, card_id: card.id)
+      next if CardMechanic.find_by(mechanic_id: mechanic.id , card_id: card.id)
+      CardMechanic.create(mechanic_id: mechanic.id, card_id: card.id)
       p "(Card)>>> Linking --#{mechanic.name}-- to: #{card.name}"
     end
   end
@@ -174,38 +189,18 @@ p '>> Deleting Useless Card Data'
 p "(Data Check)>>> Checking for Mechanically Named Cards (ex: 'Battlecry' , 'Rush')"
 Mechanic.all.each do |mechanic|
   Card.all.each do |card|
-    if card.name == mechanic.name
-      p "Deleting #{card.name} from set: #{card.card_set.name}"
-      Card.find_by(id: card.id).delete
-    else next
+    unless card.name.downcase == 'jade golem'
+      if card.name == mechanic.name
+        p "Deleting #{card.name} from set: #{card.card_set.name}"
+        Card.find_by(id: card.id).delete
+      else next
+      end
     end
   end
 end
 
 p '(Data Check)>> Adjusting Cardset Data'
 # Adding Years and Standard-Play to CardSets
-
-# CardSet.find_by(name: 'Basic').update(year: 2014, standard: true)
-# CardSet.find_by(name: 'Classic').update(year: 2014, standard: true)
-# CardSet.find_by(name: 'Hall of Fame').update(year: 2014, standard: false)
-# CardSet.find_by(name: 'Naxxramas').update(year: 2014, standard: false)
-# CardSet.find_by(name: 'Goblins vs Gnomes').update(year: 2014, standard: false)
-# CardSet.find_by(name: 'Blackrock Mountain').update(year: 2015, standard: false)
-# CardSet.find_by(name: 'The Grand Tournament').update(year: 2015, standard: false)
-# CardSet.find_by(name: 'The League of Explorers').update(year: 2015, standard: false)
-# CardSet.find_by(name: 'Whispers of the Old Gods').update(year: 2016, standard: false)
-# CardSet.find_by(name: 'One Night in Karazhan').update(year: 2016, standard: false)
-# CardSet.find_by(name: 'Mean Streets of Gadgetzan').update(year: 2016, standard: false)
-# CardSet.find_by(name: "Journey to Un'Goro").update(year: 2017, standard: false)
-# CardSet.find_by(name: 'Knights of the Frozen Throne').update(year: 2017, standard: false)
-# CardSet.find_by(name: 'Kobolds & Catacombs').update(year: 2017, standard: false)
-# CardSet.find_by(name: 'The Witchwood').update(year: 2018, standard: true)
-# CardSet.find_by(name: 'The Boomsday Project').update(year: 2018, standard: true)
-# CardSet.find_by(name: "Rastakhan's Rumble").update(year: 2018, standard: true)
-# CardSet.find_by(name: 'Rise of Shadows').update(year: 2019, standard: true)
-# CardSet.find_by(name: 'Saviors of Uldum').update(year: 2019, standard: true)
-# CardSet.find_by(name: 'Descent of Dragons').update(year: 2019, standard: true)
-# CardSet.find_by(name: 'Wild Event').update(year: 2019, standard: true)
 
 CardSet.find_by(name: 'Basic').update(year: 2014)
 CardSet.find_by(name: 'Classic').update(year: 2014)
@@ -230,10 +225,16 @@ CardSet.find_by(name: 'Descent of Dragons').update(year: 2019)
 CardSet.find_by(name: 'Wild Event').update(year: 2019)
 
 CardSet.all.each do |set|
-  is_standard = (set.year >= Date.current.year - 1)
+  is_standard = true
+  if !set.year
+    is_standard = false
+  else
+    if !(set.year >= Date.current.year - 1 && (set.name == 'Basic' || set.name == 'Classic'))
+      is_standard = false
+    end
+  end
   set.update(standard: is_standard)
   p "(CardSet)>>> Setting #{set.name} to #{set.standard ? 'standard' : 'wild'}"
-  nil
 end
 
 # Manual Setup for DeckBuilding
@@ -249,5 +250,7 @@ PlayerClass.find_by(name: 'Druid').update(dbf_id: 274)
 PlayerClass.find_by(name: 'Rogue').update(dbf_id: 930)
 
 # Generate Synergies in Standard Cards
+
+# get card backs
 
 p '(Seed)> Seeding Complete'
