@@ -25,25 +25,11 @@ class Card < ApplicationRecord
   end
 
   def self.standard_cards
-    temp = []
-    CardSet.where(standard: true).each do |set|
-      set.cards.each do |card|
-        temp.push(card)
-      end
-    end
-    temp.to_a
+    Card.joins(:card_set).where('card_sets.standard = true')
   end
 
   def self.wild_cards
-    temp = standard_cards
-    CardSet.where(standard: false).each do |set|
-      next if set.year.nil?
-
-      set.cards.each do |card|
-        temp.push(card)
-      end
-    end
-    temp
+    Card.joins(:card_set).where('card_sets.standard = true OR card_sets.standard = false')
   end
 
   def self.find_by_tribe(tribe_name)
