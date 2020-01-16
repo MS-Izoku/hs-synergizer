@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
-  use_doorkeeper
+  #use_doorkeeper
   # resources :users
   #get '/users/profile' , to: 'users#profile'
   #post '/users' , to: '/users#create'
