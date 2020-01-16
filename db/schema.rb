@@ -12,6 +12,7 @@
 
 ActiveRecord::Schema.define(version: 2020_01_03_011800) do
 
+
   create_table "artists", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false

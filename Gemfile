@@ -8,13 +8,11 @@ gem 'rails', '~> 5.2.3'
 # Use sqlite3 as the database for Active Record
 gem 'sqlite3'
 # Use Puma as the app server
-gem 'puma', '~> 3.11'
+gem 'puma', '~> 4.3.1'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 # gem 'jbuilder', '~> 2.5'
 # Use Redis adapter to run Action Cable in production
 # gem 'redis', '~> 4.0'
-# Use ActiveModel has_secure_password
-# gem 'bcrypt', '~> 3.1.7'
 
 # Use ActiveStorage variant
 # gem 'mini_magick', '~> 4.8'
@@ -25,9 +23,16 @@ gem 'puma', '~> 3.11'
 gem 'pry', '~> 0.10.3'
 gem 'pretty_json', '~> 1.0', '>= 1.0.1'
 
+# authentication gems
+gem 'bcrypt'
+gem 'devise'
+gem 'doorkeeper'
+gem 'jwt'
+
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', '>= 1.1.0', require: false
 
+# gems for parsing data
 gem 'deckstrings' # required to encode / decode deck codes
 gem 'nokogiri' # needed to parse rich card-text
 gem 'numbers_in_words', '~> 0.4.0' # easy to use number formatting (ex: "two" becomes 2)

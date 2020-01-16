@@ -82,8 +82,12 @@ class Card < ApplicationRecord
     text = Nokogiri::HTML(card_text).text
     temp_str = ''
 
+
+    #p text
+    # Something is happening here that is causing issues splitting up the string
     text.split('[x]').reject { |str| str == '' }.each { |str| temp_str += str }
     text = temp_str
+    #p temp_str
 
     temp_str = ''
     text.split(':').reject { |str| str == '' }.each { |str| temp_str += str }
@@ -134,71 +138,234 @@ class Card < ApplicationRecord
     all_keywords
   end
 
-  def self.key_phrases
-    ['if your deck has no duplicates', "your opponent's cards", 'at the start of your turn', '50% chance to',
-     'if your board is full of', 'whenever you play', 'after you', 'each player', 'reveal a', 'for each',
-     "if you're holding a spell that costs (5) or more", 'if you have unspent mana at the end of your turn',
-     'if you control', 'it costs', 'after you play', 'after you cast', 'targets chosen randomly', 'split among', "set a minion's",
-     'from your deck', 'hero power', 'return it to life', 'after you summon a', 'return a', 'change each',
-     'equip a', 'casts when drawn', 'summons when', "while you're", 'your hero takes damage', 'discard', 'for the rest of the game',
-     'whenever your hero attacks', 'choose a', 'if you have', 'spell damage', 'your spells cost', 'your opponents spells cost', 'copy a',
-     'whenever this minion', "can't be targeted by spells or hero powers", 'until your next turn', 'take an extra turn', "fill each player's",
-     'after this minion survives damage', 'at the start your turn', 'your minions with', 'casts a random', 'plays a random',
-     'start the game', 'if your deck is empty', 'if you have no', 'if your hand has no', 'go dormant', 'the first', 'your first',
-     'your cards that summon minions', "if you're holding a dragon", 'if you played an elemental last turn', 'if you have 10 mana crystals',
-     'if your hand has no']
+
+  def self.kw_effects
+    {
+
+    }
   end
 
-  def parse_key_phrases
-    all_keywords = {
-      remaining_plain_text: ''
+  def self.key_phrases # need to split these out
+    [
+      '50% chance to',
+      'after this minion survives damage',
+      'after you',
+      'after you cast',
+      'after you play',
+      'after you summon a',
+      'at the start of your turn',
+      'at the start your turn',
+      "can't be targeted by spells or hero powers",
+      'casts a random',
+      'casts when drawn',
+      'change each',
+      'choose a',
+      'copy a',
+      'discard',
+      'each player',
+      'equip a',
+      "fill each player's",
+      'for each',
+      'for the rest of the game',
+      'from your deck',
+      'go dormant',
+      'hero power',
+      'if you control',
+      'if you have',
+      'if you have 10 mana crystals',
+      'if you have no',
+      'if you have unspent mana at the end of your turn',
+      'if you played an elemental last turn',
+      "if you're holding a dragon",
+      "if you're holding a spell that costs (5) or more",
+      'if your board is full of',
+      'if your deck has no duplicates',
+      'if your deck is empty',
+      'if your hand has no',
+      'it costs',
+      'plays a random',
+      'reduce the cost',
+      'restore',
+      'return a',
+      'return it to life',
+      'reveal a',
+      "set a minion's",
+      'spell damage',
+      'split among',
+      'start the game',
+      'summon',
+      'summons when',
+      'take an extra turn',
+      'targets chosen randomly',
+      'the first',
+      'until your next turn',
+      'whenever this minion',
+      'whenever you play',
+      'whenever your hero attacks',
+      "while you're",
+      'your cards that summon minions',
+      'your first',
+      'your hero takes damage',
+      'your minions with',
+      "your opponent's cards",
+      'your opponents spells cost',
+      'your spells cost'
+    ]
+  end
+
+  def self.kw_targets
+    {
+      self: ["you" , "your" , "you're"],
+      opponent: ['opponent', "opponent's"],
+      both: ['each player', 'both players'],
+      deck: ["deck" , "decks"],
+      minion: ["minion" , "minions"]
+    }
+  end
+
+  def self.kw_actions
+    {
+      control: ["control"],
+      hold: ["holding" , "hold"],
+      attack: ["attack"],
+      damage: ["damage" , "damaged" , "damage"]
+    }
+  end
+
+
+  def self.core_mechanics
+    {
+      draw: ["draw" , "draws" , "drawn"],
+      play: ["play" , "plays" , "played"],
+      attack: ["attack" , "attacks"],
+      survives_damage: ["survives"]
+    }
+  end
+
+  def self.kw_stats
+    {
+      attack: [*0..100],
+      health: [*0..100],
+      cost: ['cost']
+    }
+  end
+
+  def self.kw_effect_timing
+    {
+      start_of_turn: ["at the start of your turn"],
+      end_of_turn: ["at the end of your turn" , "when your turn ends"],
+      on_draw: ['casts when drawn', 'draw a card'],
+      start_of_game: ['start of game'],
+      end_of_game: ['end of game'],
+      on_play: ["battlecry"],
+      on_death: ["deathrattle"],
+      this_turn: ["this turn"]
+    }
+  end
+
+  def self.kw_conditionals
+    ['whenever', 'if']
+  end
+
+  # parse through sentence to find conditional phrase
+  def self.find_condition(sentence)
+    condition = {
+      plain_text: sentence,
+      conditional: "",
+      timing: "",
+      target: "",
+      action: "",
+      action_target: "",
+      effect: ""
     }
 
-    text = plain_text
-    Card.key_phrases.each do |phrase|
-      next unless text.include?(phrase)
+    sentence = sentence.split(" ")
+    p sentence
+    
 
-      if phrase == 'if your deck has no duplicates'
-        # CardMechanic.create(card_id: self.id , mechanic_id: Mechanic.find_or_create_by(name: ""))
-        CardMechanic.create(card_id: id, mechanic_id: Mechanic.find_or_create_by(name: 'singleton'))
-      elsif phrase == 'return it to life'
-        # CardMechanic.create(card_id: self.id , mechanic_id: Mechanic.find_or_create_by(name: "ressurect").id)
-        make_card_mechanic('ressurect')
-      elsif phrase == 'if your deck is empty'
-        CardMechanic.create(card_id: id, mechanic_id: Mechanic.find_or_create_by(name: 'empty deck').id)
-      elsif phrase == "if you're holding a dragon"
-        tribe = Tribe.find_by(name: 'Dragon')
-        CardMechanic.create(card_id: id, mechanic_id: Mechanic.find_or_create_by(name: 'tribal', tribal_synergy_id: tribe.id))
-      elsif phrase == "your opponent's cards"
-        # CardMechanic.create(card_id: self.id , mechanic_id: Mechanic.find_or_create_by(name: "disruption"))
-        make_card_mechanic('disruption')
-      elsif phrase == 'if you played an elemental last turn'
-        tribe = Tribe.find_by(name: 'elemental')
-        CardMechanic.create(card_id: id, mechanic_id: Mechanic.find_or_create_by(name: 'tribal', tribal_synergy_id: tribe.id))
-      elsif phrase == 'give it'
-        # some kind of buff
-        nil
-      elsif phrase == 'if you have no'
-        # x cost minions
-        # spells
-        # minions
-        nil
-      elsif phrase == 'your spells cost'
-        # go through the phrase to find the "your spells cost", then parse the integer in ()
-        CardMechanic.create(card_id: id, mechanic_id: Mechanic.find_or_create_by(name: 'cost change').id, cost_change: 1)
-      elsif phrase == 'at the end of your turn'
-        make_card_mechanic('end of turn')
-      elsif phrase == 'from your deck'
-          
-      else
-        target_mechanic = Mechanic.find_by(name: phrase)
+    # need to dry this up
+    # go through conditionals , this will need to be the basis for everything in the method
+    # each conditional will need it's own method inside of here, but this works for SOME cards to start this out
+    Card.kw_conditionals.each do |conditional|
+      if sentence.include?(conditional)
+        condition[:conditional] = conditional
+        break
       end
-
-      text.slice!(phrase)
     end
-    all_keywords[:remaining_plain_text] = text
 
-    all_keywords
+    Card.kw_effect_timing.each do |timing_key , timing_key_arr|
+      timing_key_arr.each do |word|
+        if condition[:plain_text].include?(word)
+          condition[:timing] = timing_key.to_s
+          break
+        end
+      end
+    end
+
+    # go through possible targets for the conditonal (ie: you or your opponent , maybe deck)
+    Card.kw_targets.each do |target_type , target_type_words|
+      target_type_words.each do |word|
+        if sentence.include?(word)
+          condition[:target] = target_type.to_s
+          break
+        end
+      end
+    end
+
+    Card.kw_actions.each do |action_key , action_words|
+      action_words.each do |word|
+        if sentence.include?(word)
+          condition[:action] = action_key.to_s
+          break
+        end
+      end
+    end
+
+    # do I need a seperate target hash for this?
+    Card.kw_targets.each do |target_type , target_type_words|
+      target_type_words.each do |word|
+        if sentence.include?(word)
+          condition[:action_target] = target_type.to_s
+          break
+        end
+      end
+    end
+
+    Card.kw_effects.each do |effect_type , effect_type_words|
+      effect_type_words.each do |word|
+        if sentence.include?(word)
+          condition[:effect] = target_type.to_s
+          break
+        end
+      end
+    end
+
+    condition
+  end
+
+  # split off sentences to parse through each
+  def split_sentences
+    sentences = self.plain_text.split(".")
+    while sentences.include?(" ") do
+      sentences = check_for_blanks_in_arr(sentences)
+    end
+    sentences
+  end
+
+  def check_for_blanks_in_arr(arr)
+    if arr.include?(" ")
+      ind = arr.find_index(" ")
+      arr.delete_at(ind)
+    end
+    arr
+  end
+
+  # used for sorting out keywords when a new one is added
+  def self.kw_sort
+    key_phrases.sort.each do |phrase|
+      puts "\"#{phrase}\","
+    end
+    nil
   end
 
   def make_card_mechanic(mechanic_name)
