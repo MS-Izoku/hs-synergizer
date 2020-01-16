@@ -78,11 +78,10 @@ class Card < ApplicationRecord
     temp
   end
 
-  # this should not live here, not in this class
   def plain_text
-    # needs optomization, not dry enough
     text = Nokogiri::HTML(card_text).text
     temp_str = ''
+
 
     #p text
     # Something is happening here that is causing issues splitting up the string
@@ -93,7 +92,6 @@ class Card < ApplicationRecord
     temp_str = ''
     text.split(':').reject { |str| str == '' }.each { |str| temp_str += str }
     text = temp_str
-    #p temp_str
 
     text = text.split('\\n')
     temp_str = ''
@@ -102,13 +100,15 @@ class Card < ApplicationRecord
       temp_str += str
     end
     text = temp_str
-    #p temp_str
-
-    text = text.sub! '_', ' ' # underscores sometimes come in with certain token/stat cards
 
     temp_str.sub('_', ' ')
   end
 
+  def mechanic_hash
+    plain_text = self.plain_text.downcase
+  end
+
+  # possibly should be deleted
   def generate_keywords
     all_keywords = {
       minions: [],
@@ -116,17 +116,7 @@ class Card < ApplicationRecord
     }
 
     plain_text = self.plain_text.downcase
-
-    # this will be replaced with the parse_key_phrases when complete
-    # Card.key_phrases.each do |phrase|
-    #   if plain_text.include?(phrase)
-    #     all_keywords[phrase] = 1
-    #     plain_text.slice!(phrase)
-    #   else next
-    #   end
-    # end
     parse_key_phrases
-    # parse_key_phrases
 
     Mechanic.names.each do |mechanic|
       if plain_text.include?(" #{mechanic.downcase}") || plain_text.include?("#{mechanic.downcase} ")

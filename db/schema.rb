@@ -10,7 +10,8 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_12_31_034043) do
+ActiveRecord::Schema.define(version: 2020_01_03_011800) do
+
 
   create_table "artists", force: :cascade do |t|
     t.string "name"
@@ -161,6 +162,13 @@ ActiveRecord::Schema.define(version: 2019_12_31_034043) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "dbf_id"
+  end
+
+  create_table "saved_decks", force: :cascade do |t|
+    t.integer "user_id"
+    t.integer "deck_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "tribes", force: :cascade do |t|
