@@ -15,6 +15,6 @@ class CardSerializer
      :dbf_id , 
      :dust_cost
     )
-  belongs_to :card_set , serializer: CardSetSerializer
-  belongs_to :player_class , serializer: PlayerClassSerializer
+  #belongs_to :card_set , serializer: CardSetSerializer
+  #belongs_to :player_class , serializer: PlayerClassSerializer
 end

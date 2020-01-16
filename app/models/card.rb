@@ -24,6 +24,7 @@ class Card < ApplicationRecord
     Card.where.not(collectable: nil)
   end
 
+  # Sorting Cards region
   def self.standard_cards
     Card.joins(:card_set).where('card_sets.standard = true')
   end
@@ -32,14 +33,15 @@ class Card < ApplicationRecord
     Card.joins(:card_set).where('card_sets.standard = true OR card_sets.standard = false')
   end
 
-  def self.find_by_tribe(tribe_name)
-    cards = Tribe.find_by(name: tribe_name).cards
-    cards
+  def self.all_by_mechanic(mechanic_name, is_standard = true)
+    mechanic = Mechanic.find_by(name: mechanic_name)
+    Card.joins(:mechanics, :card_mechanics, :card_set).where(card_mechanics: { mechanic_id: mechanic.id }, card_sets: { standard: is_standard })
   end
 
-  def self.find_by_tribe_wild(_tribe_name)
-    wild_cards
+  def self.all_by_tribe(tribe_name, is_standard = true)
+    Card.joins(:tribe, :card_set).where(tribes: { name: tribe_name }, card_sets: { standard: is_standard })
   end
+  # End of Card Sorting
 
   def self.split_array(array, cards_per_array)
     result = []
@@ -57,23 +59,18 @@ class Card < ApplicationRecord
   end
 
   def self.names
-    temp = []
-    Card.all.each do |card|
-      temp.push(card.name)
-    end
-    temp
+    Card.joins(:card_set).where(card_sets: {standard: true}).select(:name)
   end
 
   def plain_text
     text = Nokogiri::HTML(card_text).text
     temp_str = ''
 
-
-    #p text
+    # p text
     # Something is happening here that is causing issues splitting up the string
     text.split('[x]').reject { |str| str == '' }.each { |str| temp_str += str }
     text = temp_str
-    #p temp_str
+    # p temp_str
 
     temp_str = ''
     text.split(':').reject { |str| str == '' }.each { |str| temp_str += str }
@@ -123,7 +120,6 @@ class Card < ApplicationRecord
     p check_for_stats
     all_keywords
   end
-
 
   def self.kw_effects
     {
@@ -201,30 +197,29 @@ class Card < ApplicationRecord
 
   def self.kw_targets
     {
-      self: ["you" , "your" , "you're"],
+      self: ['you', 'your', "you're"],
       opponent: ['opponent', "opponent's"],
       both: ['each player', 'both players'],
-      deck: ["deck" , "decks"],
-      minion: ["minion" , "minions"]
+      deck: %w[deck decks],
+      minion: %w[minion minions]
     }
   end
 
   def self.kw_actions
     {
-      control: ["control"],
-      hold: ["holding" , "hold"],
-      attack: ["attack"],
-      damage: ["damage" , "damaged" , "damage"]
+      control: ['control'],
+      hold: %w[holding hold],
+      attack: ['attack'],
+      damage: %w[damage damaged damage]
     }
   end
 
-
   def self.core_mechanics
     {
-      draw: ["draw" , "draws" , "drawn"],
-      play: ["play" , "plays" , "played"],
-      attack: ["attack" , "attacks"],
-      survives_damage: ["survives"]
+      draw: %w[draw draws drawn],
+      play: %w[play plays played],
+      attack: %w[attack attacks],
+      survives_damage: ['survives']
     }
   end
 
@@ -238,36 +233,35 @@ class Card < ApplicationRecord
 
   def self.kw_effect_timing
     {
-      start_of_turn: ["at the start of your turn"],
-      end_of_turn: ["at the end of your turn" , "when your turn ends"],
+      start_of_turn: ['at the start of your turn'],
+      end_of_turn: ['at the end of your turn', 'when your turn ends'],
       on_draw: ['casts when drawn', 'draw a card'],
       start_of_game: ['start of game'],
       end_of_game: ['end of game'],
-      on_play: ["battlecry"],
-      on_death: ["deathrattle"],
-      this_turn: ["this turn"]
+      on_play: ['battlecry'],
+      on_death: ['deathrattle'],
+      this_turn: ['this turn']
     }
   end
 
   def self.kw_conditionals
-    ['whenever', 'if']
+    %w[whenever if]
   end
 
   # parse through sentence to find conditional phrase
   def self.find_condition(sentence)
     condition = {
       plain_text: sentence,
-      conditional: "",
-      timing: "",
-      target: "",
-      action: "",
-      action_target: "",
-      effect: ""
+      conditional: '',
+      timing: '',
+      target: '',
+      action: '',
+      action_target: '',
+      effect: ''
     }
 
-    sentence = sentence.split(" ")
+    sentence = sentence.split(' ')
     p sentence
-    
 
     # need to dry this up
     # go through conditionals , this will need to be the basis for everything in the method
@@ -279,7 +273,7 @@ class Card < ApplicationRecord
       end
     end
 
-    Card.kw_effect_timing.each do |timing_key , timing_key_arr|
+    Card.kw_effect_timing.each do |timing_key, timing_key_arr|
       timing_key_arr.each do |word|
         if condition[:plain_text].include?(word)
           condition[:timing] = timing_key.to_s
@@ -289,7 +283,7 @@ class Card < ApplicationRecord
     end
 
     # go through possible targets for the conditonal (ie: you or your opponent , maybe deck)
-    Card.kw_targets.each do |target_type , target_type_words|
+    Card.kw_targets.each do |target_type, target_type_words|
       target_type_words.each do |word|
         if sentence.include?(word)
           condition[:target] = target_type.to_s
@@ -298,7 +292,7 @@ class Card < ApplicationRecord
       end
     end
 
-    Card.kw_actions.each do |action_key , action_words|
+    Card.kw_actions.each do |action_key, action_words|
       action_words.each do |word|
         if sentence.include?(word)
           condition[:action] = action_key.to_s
@@ -308,7 +302,7 @@ class Card < ApplicationRecord
     end
 
     # do I need a seperate target hash for this?
-    Card.kw_targets.each do |target_type , target_type_words|
+    Card.kw_targets.each do |target_type, target_type_words|
       target_type_words.each do |word|
         if sentence.include?(word)
           condition[:action_target] = target_type.to_s
@@ -317,7 +311,7 @@ class Card < ApplicationRecord
       end
     end
 
-    Card.kw_effects.each do |effect_type , effect_type_words|
+    Card.kw_effects.each do |_effect_type, effect_type_words|
       effect_type_words.each do |word|
         if sentence.include?(word)
           condition[:effect] = target_type.to_s
@@ -331,16 +325,14 @@ class Card < ApplicationRecord
 
   # split off sentences to parse through each
   def split_sentences
-    sentences = self.plain_text.split(".")
-    while sentences.include?(" ") do
-      sentences = check_for_blanks_in_arr(sentences)
-    end
+    sentences = plain_text.split('.')
+    sentences = check_for_blanks_in_arr(sentences) while sentences.include?(' ')
     sentences
   end
 
   def check_for_blanks_in_arr(arr)
-    if arr.include?(" ")
-      ind = arr.find_index(" ")
+    if arr.include?(' ')
+      ind = arr.find_index(' ')
       arr.delete_at(ind)
     end
     arr
