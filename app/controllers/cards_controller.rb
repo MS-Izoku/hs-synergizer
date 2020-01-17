@@ -3,12 +3,14 @@
 class CardsController < ApplicationController
   def index
     cards = Card.all
-    render json: CardSerializer.new(cards)
+    #render json: CardSerializer.new(cards)
+    card_check(cards)
   end
 
   def wild_cards
     cards = Card.wild_cards
-    render json: CardSerializer.new(cards)
+    card_check(cards)
+    #render json: CardSerializer.new(cards)
   end
 
   def standard_cards
@@ -17,25 +19,33 @@ class CardsController < ApplicationController
   end
 
   def standard_cards_by_mechanic
-    cards = CardMechanic.where(mechanic_id: params[:id]).cards
-    render json: CardSerializer.new(cards)
+    cards = Card.all_by_mechanic(params[:name] , true)
+    card_check(cards)
   end
 
   def standard_spells
     cards = Card.standard_cards
-    if !cards
-      render json: {error: "No Cards Found"} , status: 404
-    else
-      render json: cards
-    end
+    card_check(cards)
+  end
+
+  def wild_cards_by_mechanic
+    cards = Card.all_by_mechanic(params[:name] , false)
+    card_check(cards)
   end
 
   def show
     card = Card.find_by(id: params[:id])
-    if !card
-      render json: { error: "Card Not Found" }, status: 404
+    card_check(card)
+  end
+
+  private
+
+  def card_check(cards , options={})
+    if !cards
+      render json: {error: "No Cards Found"} , status: 404
     else
-      render json: CardSerializer.new(card)
+      render json: CardSerializer.new(cards , options)
     end
   end
+
 end

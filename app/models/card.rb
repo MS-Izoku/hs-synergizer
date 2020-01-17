@@ -41,6 +41,10 @@ class Card < ApplicationRecord
   def self.all_by_tribe(tribe_name, is_standard = true)
     Card.joins(:tribe, :card_set).where(tribes: { name: tribe_name }, card_sets: { standard: is_standard })
   end
+
+  def self.all_from_set(set_name)
+    CardSet.find_by(name: set_name).cards
+  end
   # End of Card Sorting
 
   def self.split_array(array, cards_per_array)

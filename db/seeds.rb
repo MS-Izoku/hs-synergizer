@@ -237,6 +237,16 @@ CardSet.all.each do |set|
   p "(CardSet)>>> Setting #{set.name} to #{set.standard ? 'standard' : 'wild'}"
 end
 
+# Temporary Setting of CardSets before I fix the seed
+CardSet.find_by(name: 'Classic').update(standard: true)
+CardSet.find_by(name: 'The Witchwood').update(standard: true)
+CardSet.find_by(name: 'The Boomsday Project').update(standard: true)
+CardSet.find_by(name: "Rastakhan's Rumble").update(standard: true)
+CardSet.find_by(name: 'Rise of Shadows').update(standard: true)
+CardSet.find_by(name: 'Saviors of Uldum').update(standard: true)
+CardSet.find_by(name: 'Descent of Dragons').update(standard: true)
+# end of temp
+
 # Manual Setup for DeckBuilding
 p "(PlayerClass)>> Setting Up PlayerClass DBFID's"
 PlayerClass.find_by(name: 'Mage').update(dbf_id: 637)
