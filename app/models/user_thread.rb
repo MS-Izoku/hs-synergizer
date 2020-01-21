@@ -1,0 +1,2 @@
+class UserThread < ApplicationRecord
+end

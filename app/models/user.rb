@@ -3,6 +3,11 @@
 class User < ApplicationRecord
   has_secure_password
 
+  has_many :user_posts
+  has_many :forum_posts, through: [:posts , ]
+
+  has_many :commentables
+
   # need to handle error validation for this end
   PASSWORD_REQUIREMENTS = /\A
   (?=.{8,50}) # length-check , might be unrealistically long

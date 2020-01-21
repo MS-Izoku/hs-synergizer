@@ -140,6 +140,8 @@ if skip_fetch == false
   end
 end
 
+Card.all.where(img: nil).delete_all
+
 p 'Initial Seed Complete'
 p '(Card)>>> Initializing Card Keyword Parsing'
 Card.all.each do |card|

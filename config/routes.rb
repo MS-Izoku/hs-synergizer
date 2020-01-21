@@ -1,11 +1,15 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
+  resources :forum_threads
   #use_doorkeeper
   # resources :users
   #get '/users/profile' , to: 'users#profile'
   #post '/users' , to: '/users#create'
 
+  get '/home' , to: 'index#landing'
+
+  get '/cards/index/:page', to: 'cards#index'
   scope '/cards/standard' do
     get '/', to: 'cards#standard_cards'
     get 'by_mechanic/mechanic_name:', to: 'cards#standard_cards_by_mechanic'
@@ -28,6 +32,4 @@ Rails.application.routes.draw do
   resources :deck , except: [:index , :update , :create]
 
   resources :saved_deck , only: [:create , :delete]
-  #resources :tribe , except: [:new , :create , :update , :edit]
-
 end
