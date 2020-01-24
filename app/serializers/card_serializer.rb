@@ -1,6 +1,7 @@
 class CardSerializer
   include FastJsonapi::ObjectSerializer
   attributes( 
+    :id,
      :name ,
      :card_text , 
      :flavor_text , 

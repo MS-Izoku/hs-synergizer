@@ -125,7 +125,6 @@ class Card < ApplicationRecord
       pt.slice!(name)
     end
     pt
-    # all_keywords
   end
 
   def self.key_phrases

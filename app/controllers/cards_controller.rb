@@ -2,17 +2,17 @@
 
 class CardsController < ApplicationController
   def index
-    cards = Card.all.paginate
-    render json: CardSerializer.new(cards)
+    cards = Card.all
+    render_if_cards_exist(cards, index_pagination_count(1))
   end
 
   def wild_cards
-    cards = Card.wild_cards.paginate(page: params[:page], per_page: index_pagination_count(20))
+    cards = Card.wild_cards.paginate(page: params[:page], per_page: index_pagination_count(1))
     render json: CardSerializer.new(cards)
   end
 
   def standard_cards
-    cards = Card.standard_cards.paginate(page: params[:page], per_page: index_pagination_count(20))
+    cards = Card.standard_cards.paginate(page: params[:page], per_page: index_pagination_count(1))
     render json: CardSerializer.new(cards)
   end
 
@@ -20,7 +20,7 @@ class CardsController < ApplicationController
     cards = CardMechanic.where(mechanic_id: params[:id]).cards
     # cards = cards.paginate(page: params[:page], per_page: index_pagination_count(20))
     # render json: CardSerializer.new(cards)
-    render_if_cards_exist(cards, index_pagination_count(20))
+    render_if_cards_exist(cards, index_pagination_count(1))
   end
 
   def standard_spells
@@ -53,7 +53,8 @@ class CardsController < ApplicationController
       render json: { error: 'Cards Not Found' }, status: 404
     else
       if page_count && page_count > 0
-        render json: CardSerializer.new(card_data).paginate(page: params[:page], per_page: index_pagination_count(page_count))
+        # render json: CardSerializer.new(card_data).paginate(page: params[:page], per_page: index_pagination_count(page_count))
+        render json: CardSerializer.new(card_data.paginate(page: params[:page], per_page: index_pagination_count(page_count)))
       else
         render json: CardSerializer.new(card_data)
       end
