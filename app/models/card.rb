@@ -21,17 +21,15 @@ class Card < ApplicationRecord
   end
 
   def self.zilliax
-    Card.find_by(name: "Zilliax" , cost: 5)
+    Card.find_by(name: 'Zilliax', cost: 5)
   end
 
   def self.brann
-    Card.find_by(name: "Dinotamer Brann" , cost: 7)
+    Card.find_by(name: 'Dinotamer Brann', cost: 7)
   end
 
   def list_mechanics
-    self.mechanics.each do |mechanic|
-      p mechanic.name
-    end
+    Mechanic.joins(:card_mechanics).where(card_mechanics: {card_id: self.id})
   end
 
   def self.all_cards # Card.all gives some useless cards
@@ -39,34 +37,19 @@ class Card < ApplicationRecord
   end
 
   def self.standard_cards
-    temp = []
-    CardSet.where(standard: true).each do |set|
-      set.cards.each do |card|
-        temp.push(card)
-      end
-    end
-    temp.to_a
+    Card.joins(:card_set).where(card_sets: { standard: true }, collectable: true)
   end
 
   def self.wild_cards
-    temp = standard_cards
-    CardSet.where(standard: false).each do |set|
-      next if set.year.nil?
-
-      set.cards.each do |card|
-        temp.push(card)
-      end
-    end
-    temp
+    Card.joins(:card_set).where(card_sets: { standard: true }, collectable: true)
   end
 
   def self.find_by_tribe(tribe_name)
-    cards = Tribe.find_by(name: tribe_name).cards
-    cards
+    Card.standard_cards.joins(:tribe).where(tribe: { name: tribe_name }, collectable: true)
   end
 
-  def self.find_by_tribe_wild(_tribe_name)
-    wild_cards
+  def self.find_by_tribe_wild(tribe_name)
+    Card.wild_cards.joins(:tribe).where(tribe: { name: tribe_name }, collectable: true)
   end
 
   def self.split_array(array, cards_per_array)
@@ -121,13 +104,14 @@ class Card < ApplicationRecord
     all_keywords = {
       minions: [],
       tokens: [],
-      mechanics: [],
+      mechanics: []
     }
 
-    pt = self.plain_text.downcase
+    pt = plain_text.downcase
 
     Mechanic.names.each do |mechanic|
       next unless pt.include?(" #{mechanic.downcase}") || pt.include?("#{mechanic.downcase} ")
+
       p mechanic.downcase
       all_keywords[:mechanics].push(mechanic)
       pt.slice!(mechanic.downcase)
@@ -141,7 +125,7 @@ class Card < ApplicationRecord
       pt.slice!(name)
     end
     pt
-    #all_keywords
+    # all_keywords
   end
 
   def self.key_phrases
@@ -156,7 +140,7 @@ class Card < ApplicationRecord
      'after this minion survives damage', 'at the start your turn', 'your minions with', 'casts a random', 'plays a random',
      'start the game', 'if your deck is empty', 'if you have no', 'if your hand has no', 'go dormant', 'the first', 'your first',
      'your cards that summon minions', "if you're holding a dragon", 'if you played an elemental last turn', 'if you have 10 mana crystals',
-     'summon' , "restore" , "reduce the cost"]
+     'summon', 'restore', 'reduce the cost']
   end
 
   def parse_key_phrases
@@ -178,10 +162,10 @@ class Card < ApplicationRecord
         next
       when "your opponent's cards"
         puts 'DISRUPTION FOUND'
-        if all_keywords[:keywords]['disruption'].nil? 
-          all_keywords[:keywords]['disruption'] = 0 
+        if all_keywords[:keywords]['disruption'].nil?
+          all_keywords[:keywords]['disruption'] = 0
         else
-           all_keywords[:keywords]['disruption'] += 1
+          all_keywords[:keywords]['disruption'] += 1
         end
         next
       when 'at the start of your turn'
@@ -353,15 +337,15 @@ class Card < ApplicationRecord
         next
       when 'your cards that summon minions'
         puts 'KHADGAR FOUND'
-        if all_keywords[:keywords]["summon"].nil?
-          all_keywords[:keywords]["summon"] = 1
+        if all_keywords[:keywords]['summon'].nil?
+          all_keywords[:keywords]['summon'] = 1
         else
-          all_keywords[:keywords]["summon"] += 1
+          all_keywords[:keywords]['summon'] += 1
         end
         next
       when "if you're holding a dragon"
         puts 'DRAGON HOLDING FOUND'
-        all_keywords[:keywords]["dragon"] = 1
+        all_keywords[:keywords]['dragon'] = 1
         next
       when 'if you played an elemental last turn'
         puts 'ELEMENTAL CHAIN FOUND'
@@ -369,7 +353,7 @@ class Card < ApplicationRecord
         next
       when 'if you have 10 mana crystals'
         puts 'OMEGA FOUND'
-        all_keywords[:keywords]["omega"] = 1
+        all_keywords[:keywords]['omega'] = 1
         next
       when 'summon'
         puts 'SUMMONING FOUND'
@@ -378,13 +362,13 @@ class Card < ApplicationRecord
         # summon specific minion
         next
       when 'restore'
-        puts "HEALTH-RESTORE FOUND"
+        puts 'HEALTH-RESTORE FOUND'
         # parse int from the string , then find the target type
         next
       when 'reduce the cost'
-        puts "CARD REDUCTION"
+        puts 'CARD REDUCTION'
         reduction_amount = 1 # get the actual value from a string parse
-        all_keywords[:keywords]["cost-reduction"] = reduction_amount
+        all_keywords[:keywords]['cost-reduction'] = reduction_amount
         next
       else
         puts "Phrase --#{phrase}-- not found"
@@ -398,8 +382,7 @@ class Card < ApplicationRecord
     all_keywords
   end
 
-  def quick_split_string(inp_string , splitter_string)
-  end
+  def quick_split_string(inp_string, splitter_string); end
 
   def make_card_mechanic(mechanic_name)
     mechanic = Mechanic.find_or_create_by(name: mechanic_name)

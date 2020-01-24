@@ -16,7 +16,9 @@ Rails.application.routes.draw do
   get '/wild/by-tribe/:id', to: 'cards#wild_cards_by_tribe', as: 'wild_by_tribe'
   get '/wild/spells', to: 'cards#wild_spells', as: 'wild_spells'
 
-  resources :cards , only: [:index , :show]
+  get 'cards/index/:page' , to: 'cards#index'
+
+  #resources :cards , only: [:index , :show]
   resources :mechanics, only: %i[index show]
   resources :keyword , only: [:index , :show]
   
