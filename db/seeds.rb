@@ -6,15 +6,18 @@ require 'openssl'
 require 'pry'
 require 'pretty_json'
 
-Mechanic.find_or_create_by(name: 'Summon', description: 'Summon a / a number of minions')
-Mechanic.find_or_create_by(name: 'Choose One', description: 'A choice between 2 effects')
-Mechanic.find_or_create_by(name: 'Passive', description: 'Always active once applied')
-Mechanic.find_or_create_by(name: 'Start of Game', description: 'Activates when the game starts, after your starting mulligan.')
-
 skip_fetch = false # Set this to false when you need to fetch
+show_creation_in_console = false
+
 if skip_fetch == false
-  puts '(Initializing Seed) Fetching Card Data <<<<<<'
-  puts '...'
+  User.create(username: 'cornjulio', password: 'password', email: 'email@gmail.com')
+
+Mechanic.create(name: 'Summon')
+Mechanic.create(name: 'Choose One')
+Mechanic.create(name: 'Passive')
+Mechanic.create(name: 'Start of Game', description: 'Activates when the game starts, after your starting mulligan.')
+
+  puts 'Fetching Card Data <<<<<<'
 
   url = URI('https://omgvamp-hearthstone-v1.p.rapidapi.com/cards')
 
@@ -86,30 +89,15 @@ if skip_fetch == false
       my_artist ||= Artist.create(name: card['artist'])
       new_card.artist_id = my_artist.id
 
-      # <<<<<<< DETERMINING CARD TYPE (ie: "Spell" , "Minion" , "Weapon")
-      if card['type'] != 'Minion'
-        if card['type'] == 'Spell'
-          # binding.pry
-          new_card.card_type = 'Spell'
-        elsif card['type'] == 'Weapon'
-          # binding.pry
-          new_card.card_type = 'Weapon'
-          new_card.durability = card['durability']
-        end
-
+      case card
+      when !card['health'].nil? && !card['attack'].nil?
+        new_card.card_type 'Minion'
+      when !card['durability'].nil? && !card['attack'].nil?
+        new_card.card_type 'Weapon'
       else
-        new_card.card_type = 'Minion'
+        new_card.card_type = 'Spell'
       end
-      puts "Setting #{new_card.name} to type: #{new_card.card_type}"
-      # case card
-      # when !card['health'].nil?
-      #   new_card.card_type 'Minion'
-      # when !card['durability'].nil? && !card['attack'].nil?
-      #   new_card.card_type 'Weapon'
-      # else
-      #   new_card.card_type = 'Spell'
-      # end
-      "(Card)>>>> Set Card Type to: #{new_card.card_type}"
+      p ">>>> Set Card Type to: #{new_card.card_type}" if show_creation_in_console
 
       # <<<<<< MECHANICS SECTION
       if card['mechanics']
@@ -183,23 +171,21 @@ Mechanic.find_by(name: 'jade golem').update(description: 'Summons a (1/1) Jade G
 Mechanic.find_by(name: 'freeze').update(description: 'A frozen character cannot attack this turn.')
 Mechanic.find_by(name: 'echo').update(description: 'A card that can be played multiple times from the hand, if the user has enough mana.')
 Mechanic.find_by(name: 'deathrattle').update(description: 'An effect that activates when a minion is destoyed, or otherwise triggered by another card')
-Mechanic.find_by(name: 'invoke').update(description: 'Activate your classes Galakrond Hero Power and upgrade the Galakrond Hero Card')
 
 p '>> Deleting Useless Card Data'
-p "(Data Check)>>> Checking for Mechanically Named Cards (ex: 'Battlecry' , 'Rush')"
+p ">>> Checking for Mechanically Named Cards (ex: 'Battlecry' , 'Rush')"
 Mechanic.all.each do |mechanic|
   Card.all.each do |card|
-    unless card.name.downcase == 'jade golem'
-      if card.name == mechanic.name
-        p "Deleting #{card.name} from set: #{card.card_set.name}"
-        Card.find_by(id: card.id).delete
-      else next
-      end
+    if card.name == mechanic.name
+      p "Deleting #{card.name} from set: #{card.card_set.name}"
+      Card.find_by(id: card.id).delete
+    else next
     end
   end
 end
 
-p '(Data Check)>> Adjusting Cardset Data'
+
+p '>> Adjusting Cardset Data'
 # Adding Years and Standard-Play to CardSets
 
 CardSet.find_by(name: 'Basic').update(year: 2014)
@@ -238,7 +224,7 @@ CardSet.all.each do |set|
 end
 
 # Manual Setup for DeckBuilding
-p "(PlayerClass)>> Setting Up PlayerClass DBFID's"
+p ">> Setting Up PlayerClass DBFID's"
 PlayerClass.find_by(name: 'Mage').update(dbf_id: 637)
 PlayerClass.find_by(name: 'Warrior').update(dbf_id: 7)
 PlayerClass.find_by(name: 'Hunter').update(dbf_id: 31)
@@ -249,8 +235,19 @@ PlayerClass.find_by(name: 'Warlock').update(dbf_id: 893)
 PlayerClass.find_by(name: 'Druid').update(dbf_id: 274)
 PlayerClass.find_by(name: 'Rogue').update(dbf_id: 930)
 
+# Moving NYI / Token Cards out of Sets
+
+p "Removing Token , NYI , and (Basic) Hero Cards"
+token_set = CardSet.create(name: 'Token' , standard: false)
+nyi_set = CardSet.create(name: 'NYI' , standard: false)
+heroes_set = CardSet.create(name: 'Hero Classes' , standard: false)
+
+tokens = ['Treant', 'Silver Hand Recruit']
+nyi_cards = ['Avatar of the Coin']
+hero_cards = [1066, 813, 671, 7, 31, 274, 893, 637, 930]
+
+Card.where(name: tokens).update_all(card_set_id: token_set.id , collectable: false)
+Card.where(name: nyi_cards).update_all(card_set_id: nyi_set.id , collectable: false)
+Card.where(dbf_id: hero_cards).update_all(card_set_id: heroes_set.id , collectable: false)
+
 # Generate Synergies in Standard Cards
-
-# get card backs
-
-p '(Seed)> Seeding Complete'

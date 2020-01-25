@@ -16,8 +16,22 @@ class Card < ApplicationRecord
   has_many :card_keywords
   has_many :keywords, through: :card_keywords
 
+  self.per_page = 8
+
   def is_standard?
     card_set.standard
+  end
+
+  def self.zilliax
+    Card.find_by(name: 'Zilliax', cost: 5)
+  end
+
+  def self.brann
+    Card.find_by(name: 'Dinotamer Brann', cost: 7)
+  end
+
+  def list_mechanics
+    Mechanic.joins(:card_mechanics).where(card_mechanics: {card_id: self.id})
   end
 
   def self.all_cards # Card.all gives some useless cards
@@ -25,34 +39,19 @@ class Card < ApplicationRecord
   end
 
   def self.standard_cards
-    temp = []
-    CardSet.where(standard: true).each do |set|
-      set.cards.each do |card|
-        temp.push(card)
-      end
-    end
-    temp.to_a
+    Card.joins(:card_set).where(card_sets: { standard: true }, collectable: true)
   end
 
   def self.wild_cards
-    temp = standard_cards
-    CardSet.where(standard: false).each do |set|
-      next if set.year.nil?
-
-      set.cards.each do |card|
-        temp.push(card)
-      end
-    end
-    temp
+    Card.joins(:card_set).where(card_sets: { standard: [true , false] }, collectable: true)
   end
 
   def self.find_by_tribe(tribe_name)
-    cards = Tribe.find_by(name: tribe_name).cards
-    cards
+    Card.standard_cards.joins(:tribe).where(tribe: { name: tribe_name }, collectable: true)
   end
 
-  def self.find_by_tribe_wild(_tribe_name)
-    wild_cards
+  def self.find_by_tribe_wild(tribe_name)
+    Card.wild_cards.joins(:tribe).where(tribe: { name: tribe_name }, collectable: true)
   end
 
   def self.split_array(array, cards_per_array)
@@ -82,12 +81,8 @@ class Card < ApplicationRecord
     text = Nokogiri::HTML(card_text).text
     temp_str = ''
 
-
-    #p text
-    # Something is happening here that is causing issues splitting up the string
     text.split('[x]').reject { |str| str == '' }.each { |str| temp_str += str }
     text = temp_str
-    #p temp_str
 
     temp_str = ''
     text.split(':').reject { |str| str == '' }.each { |str| temp_str += str }
@@ -101,6 +96,8 @@ class Card < ApplicationRecord
     end
     text = temp_str
 
+    text = text.sub! '_', ' ' # underscores sometimes come in with certain token/stat cards
+
     temp_str.sub('_', ' ')
   end
 
@@ -112,30 +109,28 @@ class Card < ApplicationRecord
   def generate_keywords
     all_keywords = {
       minions: [],
-      tokens: []
+      tokens: [],
+      mechanics: []
     }
 
-    plain_text = self.plain_text.downcase
-    parse_key_phrases
+    pt = plain_text.downcase
 
     Mechanic.names.each do |mechanic|
-      if plain_text.include?(" #{mechanic.downcase}") || plain_text.include?("#{mechanic.downcase} ")
-        all_keywords[mechanic] = 1
-        plain_text.slice!(mechanic)
-      end
+      next unless pt.include?(" #{mechanic.downcase}") || pt.include?("#{mechanic.downcase} ")
+
+      p mechanic.downcase
+      all_keywords[:mechanics].push(mechanic)
+      pt.slice!(mechanic.downcase)
     end
 
     Card.names.each do |name|
-      next unless plain_text.include?(name.downcase)
+      next unless pt.include?(" #{name.downcase}") || pt.include?("#{name.downcase} ")
 
-      p Card.where(name: name)
+      p Card.find_by(name: name).name
       all_keywords[:minions].push(name)
-      plain_text.slice!(name)
+      pt.slice!(name)
     end
-
-    p plain_text
-    p check_for_stats
-    all_keywords
+    pt
   end
 
 
