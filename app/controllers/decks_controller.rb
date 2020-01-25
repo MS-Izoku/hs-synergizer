@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class DecksController < ApplicationRecord
+  skip_before_action :authorized , only: [:show]
   def show
     deck = Deck.find_by(id: params[:id])
     options = {}

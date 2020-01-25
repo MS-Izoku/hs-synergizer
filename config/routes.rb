@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
-  use_doorkeeper
+  #use_doorkeeper
   # resources :users
   #get '/users/profile' , to: 'users#profile'
   #post '/users' , to: '/users#create'
@@ -21,7 +21,9 @@ Rails.application.routes.draw do
   resources :mechanics, only: %i[index show]
   resources :keyword , only: [:index , :show]
   
-  resources :deck , except: [:index , :edit , :new]
+  resources :deck , except: [:index , :update , :create]
+
+  resources :saved_deck , only: [:create , :delete]
   #resources :tribe , except: [:new , :create , :update , :edit]
 
 end

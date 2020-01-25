@@ -30,20 +30,16 @@ Mechanic.create(name: 'Start of Game', description: 'Activates when the game sta
   request['x-rapidapi-key'] = 'c15502ebd8msh183a4fdd23c6591p1954c4jsn302be1511f5b'
 
   response = http.request(request)
-  # puts PrettyJSON.new(response.read_body)
 
   data = JSON.parse(response.read_body)
 
   data.each do |_card_set_name, set_data|
-    p "> Creating Set: #{_card_set_name}" if show_creation_in_console
-
     my_set = CardSet.create(name: _card_set_name)
+    p "(CardSet)> Creating Set: #{my_set.name}"
     set_data.each do |card|
-      new_card = Card.new
+      new_card = Card.create
       new_card.name = card['name']
-
-      p ">> Creating Card: #{new_card.name}" if show_creation_in_console
-
+      p "(Card: #{new_card.name})>> Creating Card: #{new_card.name}"
       new_card.dbf_id = card['dbfId']
 
       new_card.cost = card['cost'].to_i
@@ -103,33 +99,46 @@ Mechanic.create(name: 'Start of Game', description: 'Activates when the game sta
       end
       p ">>>> Set Card Type to: #{new_card.card_type}" if show_creation_in_console
 
+      # <<<<<< MECHANICS SECTION
       if card['mechanics']
-        mechanics = card['mechanics']
-        mechanics.each do |mechanic|
-          temp_mechanic = Mechanic.find_by(name: mechanic['name'])
+        # byebug if card['name'] == "Zilliax"
+        mechanics = card['mechanics'][0] # this line needs to change, check the structure of each one if need be
+        mechanics.each do |_key, mechanic|
+          # byebug
+          temp_mechanic = Mechanic.find_by(name: mechanic)
           if temp_mechanic.nil?
-            temp_mechanic = if !mechanic['name'].nil?
-                              Mechanic.create(name: mechanic['name'])
-                            else
-                              Mechanic.create(name: mechanic['name'])
-                            end
-            m_name = mechanic['name']
-            p ">>> Creating Mechanic: #{m_name}" if show_creation_in_console
+            temp_mechanic = Mechanic.create(name: mechanic)
+            p "(Mechanic)>>> Creating New Mechanic: #{temp_mechanic.name}"
           end
-          CardMechanic.create(mechanic_id: temp_mechanic.id, card_id: new_card.id)
+
+          new_card_mechanic = CardMechanic.create(mechanic_id: temp_mechanic.id, card_id: new_card.id)
+          p "(Card-Mechanic)>>> Creating new Card Mechanic with Card##{new_card.id}(#{new_card.name}) and Mechanic##{temp_mechanic.id} (#{temp_mechanic.name})"
         end
 
       else
         vanilla = Mechanic.find_by(name: 'Vanilla')
         vanilla ||= Mechanic.create(name: 'Vanilla')
         CardMechanic.create(mechanic_id: vanilla.id, card_id: new_card.id)
+        p "(Card-Mechanic)>>> #{new_card.name} is Vanilla"
     end
 
       new_card.card_set_id = my_set.id
       new_card.save
     end
   end
+end
 
+p 'Initial Seed Complete'
+p '(Card)>>> Initializing Card Keyword Parsing'
+Card.all.each do |card|
+  plain_text = card.plain_text
+  Mechanic.all.each do |mechanic|
+    if plain_text.include?(mechanic.name)
+      next if CardMechanic.find_by(mechanic_id: mechanic.id , card_id: card.id)
+      CardMechanic.create(mechanic_id: mechanic.id, card_id: card.id)
+      p "(Card)>>> Linking --#{mechanic.name}-- to: #{card.name}"
+    end
+  end
 end
 
 # default descriptions from the Hearthstone Wiki
@@ -178,27 +187,41 @@ end
 
 p '>> Adjusting Cardset Data'
 # Adding Years and Standard-Play to CardSets
-CardSet.find_by(name: 'Basic').update(year: 2014, standard: true)
-CardSet.find_by(name: 'Classic').update(year: 2014, standard: true)
-CardSet.find_by(name: 'Hall of Fame').update(year: 2014, standard: false)
-CardSet.find_by(name: 'Naxxramas').update(year: 2014, standard: false)
-CardSet.find_by(name: 'Goblins vs Gnomes').update(year: 2014, standard: false)
-CardSet.find_by(name: 'Blackrock Mountain').update(year: 2015, standard: false)
-CardSet.find_by(name: 'The Grand Tournament').update(year: 2015, standard: false)
-CardSet.find_by(name: 'The League of Explorers').update(year: 2015, standard: false)
-CardSet.find_by(name: 'Whispers of the Old Gods').update(year: 2016, standard: false)
-CardSet.find_by(name: 'One Night in Karazhan').update(year: 2016, standard: false)
-CardSet.find_by(name: 'Mean Streets of Gadgetzan').update(year: 2016, standard: false)
-CardSet.find_by(name: "Journey to Un'Goro").update(year: 2017, standard: false)
-CardSet.find_by(name: 'Knights of the Frozen Throne').update(year: 2017, standard: false)
-CardSet.find_by(name: 'Kobolds & Catacombs').update(year: 2017, standard: false)
-CardSet.find_by(name: 'The Witchwood').update(year: 2018, standard: true)
-CardSet.find_by(name: 'The Boomsday Project').update(year: 2018, standard: true)
-CardSet.find_by(name: "Rastakhan's Rumble").update(year: 2018, standard: true)
-CardSet.find_by(name: 'Rise of Shadows').update(year: 2019, standard: true)
-CardSet.find_by(name: 'Saviors of Uldum').update(year: 2019, standard: true)
-CardSet.find_by(name: 'Descent of Dragons').update(year: 2019, standard: true)
-CardSet.find_by(name: 'Wild Event').update(year: 2019, standard: true)
+
+CardSet.find_by(name: 'Basic').update(year: 2014)
+CardSet.find_by(name: 'Classic').update(year: 2014)
+CardSet.find_by(name: 'Hall of Fame').update(year: 2014)
+CardSet.find_by(name: 'Naxxramas').update(year: 2014)
+CardSet.find_by(name: 'Goblins vs Gnomes').update(year: 2014)
+CardSet.find_by(name: 'Blackrock Mountain').update(year: 2015)
+CardSet.find_by(name: 'The Grand Tournament').update(year: 2015)
+CardSet.find_by(name: 'The League of Explorers').update(year: 2015)
+CardSet.find_by(name: 'Whispers of the Old Gods').update(year: 2016)
+CardSet.find_by(name: 'One Night in Karazhan').update(year: 2016)
+CardSet.find_by(name: 'Mean Streets of Gadgetzan').update(year: 2016)
+CardSet.find_by(name: "Journey to Un'Goro").update(year: 2017)
+CardSet.find_by(name: 'Knights of the Frozen Throne').update(year: 2017)
+CardSet.find_by(name: 'Kobolds & Catacombs').update(year: 2017)
+CardSet.find_by(name: 'The Witchwood').update(year: 2018)
+CardSet.find_by(name: 'The Boomsday Project').update(year: 2018)
+CardSet.find_by(name: "Rastakhan's Rumble").update(year: 2018)
+CardSet.find_by(name: 'Rise of Shadows').update(year: 2019)
+CardSet.find_by(name: 'Saviors of Uldum').update(year: 2019)
+CardSet.find_by(name: 'Descent of Dragons').update(year: 2019)
+CardSet.find_by(name: 'Wild Event').update(year: 2019)
+
+CardSet.all.each do |set|
+  is_standard = true
+  if !set.year
+    is_standard = false
+  else
+    if !(set.year >= Date.current.year - 1 && (set.name == 'Basic' || set.name == 'Classic'))
+      is_standard = false
+    end
+  end
+  set.update(standard: is_standard)
+  p "(CardSet)>>> Setting #{set.name} to #{set.standard ? 'standard' : 'wild'}"
+end
 
 # Manual Setup for DeckBuilding
 p ">> Setting Up PlayerClass DBFID's"

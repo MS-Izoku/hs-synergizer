@@ -17,6 +17,6 @@ class User < ApplicationRecord
   end
 
   validates_format_of :email, with: Devise.email_regexp, uniqueness: { message: 'Email already exists, did you forget your password?' }
-  validates :username, uniqueness: { message: 'Username already taken, please try again' }, length: { in: 6..20, message: 'Username must be between 6 and 20 characters' }
+  validates :username, uniqueness: { case_sensative: false , message: 'Username already taken, please try again' }, length: { in: 6..20, message: 'Username must be between 6 and 20 characters' }
   validates :password, format: PASSWORD_REQUIREMENTS
 end

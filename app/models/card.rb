@@ -77,7 +77,6 @@ class Card < ApplicationRecord
     temp
   end
 
-  # this should not live here, not in this class
   def plain_text
     text = Nokogiri::HTML(card_text).text
     temp_str = ''
@@ -102,6 +101,11 @@ class Card < ApplicationRecord
     temp_str.sub('_', ' ')
   end
 
+  def mechanic_hash
+    plain_text = self.plain_text.downcase
+  end
+
+  # possibly should be deleted
   def generate_keywords
     all_keywords = {
       minions: [],
@@ -129,261 +133,235 @@ class Card < ApplicationRecord
     pt
   end
 
-  def self.key_phrases
-    ['if your deck has no duplicates', "your opponent's cards", 'at the start of your turn', '50% chance to',
-     'if your board is full of', 'whenever you play', 'after you', 'each player', 'reveal a', 'for each',
-     "if you're holding a spell that costs (5) or more", 'if you have unspent mana at the end of your turn',
-     'if you control', 'it costs', 'after you play', 'after you cast', 'targets chosen randomly', 'split among', "set a minion's",
-     'from your deck', 'hero power', 'return it to life', 'after you summon a', 'return a', 'change each',
-     'equip a', 'casts when drawn', 'summons when', "while you're", 'your hero takes damage', 'discard', 'for the rest of the game',
-     'whenever your hero attacks', 'choose a', 'if you have', 'spell damage', 'your spells cost', 'your opponents spells cost', 'copy a',
-     'whenever this minion', "can't be targeted by spells or hero powers", 'until your next turn', 'take an extra turn', "fill each player's",
-     'after this minion survives damage', 'at the start your turn', 'your minions with', 'casts a random', 'plays a random',
-     'start the game', 'if your deck is empty', 'if you have no', 'if your hand has no', 'go dormant', 'the first', 'your first',
-     'your cards that summon minions', "if you're holding a dragon", 'if you played an elemental last turn', 'if you have 10 mana crystals',
-     'summon', 'restore', 'reduce the cost']
+
+  def self.kw_effects
+    {
+
+    }
   end
 
-  def parse_key_phrases
-    all_keywords = {
-      remaining_plain_text: plain_text.downcase,
-      keywords: {
+  def self.key_phrases # need to split these out
+    [
+      '50% chance to',
+      'after this minion survives damage',
+      'after you',
+      'after you cast',
+      'after you play',
+      'after you summon a',
+      'at the start of your turn',
+      'at the start your turn',
+      "can't be targeted by spells or hero powers",
+      'casts a random',
+      'casts when drawn',
+      'change each',
+      'choose a',
+      'copy a',
+      'discard',
+      'each player',
+      'equip a',
+      "fill each player's",
+      'for each',
+      'for the rest of the game',
+      'from your deck',
+      'go dormant',
+      'hero power',
+      'if you control',
+      'if you have',
+      'if you have 10 mana crystals',
+      'if you have no',
+      'if you have unspent mana at the end of your turn',
+      'if you played an elemental last turn',
+      "if you're holding a dragon",
+      "if you're holding a spell that costs (5) or more",
+      'if your board is full of',
+      'if your deck has no duplicates',
+      'if your deck is empty',
+      'if your hand has no',
+      'it costs',
+      'plays a random',
+      'reduce the cost',
+      'restore',
+      'return a',
+      'return it to life',
+      'reveal a',
+      "set a minion's",
+      'spell damage',
+      'split among',
+      'start the game',
+      'summon',
+      'summons when',
+      'take an extra turn',
+      'targets chosen randomly',
+      'the first',
+      'until your next turn',
+      'whenever this minion',
+      'whenever you play',
+      'whenever your hero attacks',
+      "while you're",
+      'your cards that summon minions',
+      'your first',
+      'your hero takes damage',
+      'your minions with',
+      "your opponent's cards",
+      'your opponents spells cost',
+      'your spells cost'
+    ]
+  end
 
-      }
+  def self.kw_targets
+    {
+      self: ["you" , "your" , "you're"],
+      opponent: ['opponent', "opponent's"],
+      both: ['each player', 'both players'],
+      deck: ["deck" , "decks"],
+      minion: ["minion" , "minions"]
+    }
+  end
+
+  def self.kw_actions
+    {
+      control: ["control"],
+      hold: ["holding" , "hold"],
+      attack: ["attack"],
+      damage: ["damage" , "damaged" , "damage"]
+    }
+  end
+
+
+  def self.core_mechanics
+    {
+      draw: ["draw" , "draws" , "drawn"],
+      play: ["play" , "plays" , "played"],
+      attack: ["attack" , "attacks"],
+      survives_damage: ["survives"]
+    }
+  end
+
+  def self.kw_stats
+    {
+      attack: [*0..100],
+      health: [*0..100],
+      cost: ['cost']
+    }
+  end
+
+  def self.kw_effect_timing
+    {
+      start_of_turn: ["at the start of your turn"],
+      end_of_turn: ["at the end of your turn" , "when your turn ends"],
+      on_draw: ['casts when drawn', 'draw a card'],
+      start_of_game: ['start of game'],
+      end_of_game: ['end of game'],
+      on_play: ["battlecry"],
+      on_death: ["deathrattle"],
+      this_turn: ["this turn"]
+    }
+  end
+
+  def self.kw_conditionals
+    ['whenever', 'if']
+  end
+
+  # parse through sentence to find conditional phrase
+  def self.find_condition(sentence)
+    condition = {
+      plain_text: sentence,
+      conditional: "",
+      timing: "",
+      target: "",
+      action: "",
+      action_target: "",
+      effect: ""
     }
 
-    Card.key_phrases.collect do |phrase|
-      next unless all_keywords[:remaining_plain_text].include?(phrase)
+    sentence = sentence.split(" ")
+    p sentence
+    
 
-      p phrase
-      case phrase
-      when 'if your deck has no duplicates'
-        puts 'SINGLETON FOUND'
-        all_keywords[:keywords]['singleton'] = 1
-        next
-      when "your opponent's cards"
-        puts 'DISRUPTION FOUND'
-        if all_keywords[:keywords]['disruption'].nil?
-          all_keywords[:keywords]['disruption'] = 0
-        else
-          all_keywords[:keywords]['disruption'] += 1
-        end
-        next
-      when 'at the start of your turn'
-        puts 'START OF TURN FOUND'
-        next
-      when '50% chance to'
-        puts 'OGRE FOUND'
-        next
-      when 'if your board is full of'
-        puts 'MOGU CULTIST FOUND'
-        next
-      when 'whenever you play'
-        puts 'ON CARD PLAY FOUND'
-        next
-      when 'after you'
-        puts 'AFTER PLAYER ACTION FOUND'
-        next
-      when 'each player'
-        puts 'EACH-PLAYER FOUND'
-        next
-      when 'reveal a'
-        puts 'SINGLETON FOUND'
-        next
-      when 'for each'
-        puts 'SINGLETON FOUND'
-        next
-      when "if you're holding a spell that costs (5) or more"
-        puts 'SINGLETON FOUND'
-        next
-      when 'if you have unspent mana at the end of your turn'
-        puts 'SINGLETON FOUND'
-        next
-      when 'if you control'
-        puts 'SINGLETON FOUND'
-        next
-      when 'it costs'
-        puts 'SINGLETON FOUND'
-        next
-      when 'after you play'
-        puts 'SINGLETON FOUND'
-        next
-      when 'after you cast'
-        puts 'SINGLETON FOUND'
-        next
-      when 'targets chosen randomly'
-        puts 'SINGLETON FOUND'
-        next
-      when 'split among'
-        puts 'SINGLETON FOUND'
-        next
-      when "set a minion's"
-        puts 'SINGLETON FOUND'
-        next
-      when  'from your deck'
-        puts 'SINGLETON FOUND'
-        next
-      when  'hero power'
-        puts 'SINGLETON FOUND'
-        next
-      when  'return it to life'
-        puts 'SINGLETON FOUND'
-        next
-      when 'after you summon a'
-        puts 'SINGLETON FOUND'
-        next
-      when 'return a'
-        puts 'SINGLETON FOUND'
-        next
-      when 'change each'
-        puts 'SINGLETON FOUND'
-        next
-      when 'equip a'
-        puts 'SINGLETON FOUND'
-        next
-      when 'casts when drawn'
-        puts 'SINGLETON FOUND'
-        next
-      when 'summons when'
-        puts 'SINGLETON FOUND'
-        next
-      when "while you're"
-        puts 'SINGLETON FOUND'
-        next
-      when 'your hero takes damage'
-        puts 'SINGLETON FOUND'
-        next
-      when 'discard'
-        puts 'SINGLETON FOUND'
-        next
-      when 'for the rest of the game'
-        puts 'SINGLETON FOUND'
-        next
-      when 'whenever your hero attacks'
-        puts 'SINGLETON FOUND'
-        next
-      when 'choose a'
-        puts 'SINGLETON FOUND'
-        next
-      when 'if you have'
-        puts 'SINGLETON FOUND'
-        next
-      when 'spell damage'
-        puts 'SINGLETON FOUND'
-        next
-      when 'your spells cost'
-        puts 'SINGLETON FOUND'
-        next
-      when 'your opponents spells cost'
-        puts 'SINGLETON FOUND'
-        next
-      when 'copy a'
-        puts 'SINGLETON FOUND'
-        next
-      when 'whenever this minion'
-        puts 'SINGLETON FOUND'
-        next
-      when "can't be targeted by spells or hero powers"
-        puts 'SINGLETON FOUND'
-        next
-      when 'until your next turn'
-        puts 'SINGLETON FOUND'
-        next
-      when 'take an extra turn'
-        puts 'SINGLETON FOUND'
-        next
-      when "fill each player's"
-        puts 'SINGLETON FOUND'
-        next
-      when 'after this minion survives damage'
-        puts 'SURVIVAL FOUND'
-        next
-      when 'at the start your turn'
-        puts 'START-OF-TURN FOUND'
-        next
-      when 'your minions with'
-        puts 'MINION BUFF FOUND'
-        next
-      when 'casts a random'
-        puts 'RANDOM-CAST FOUND'
-        next
-      when 'plays a random'
-        puts 'RANDOM-PLAY FOUND'
-        next
-      when 'start the game'
-        puts 'START-OF-GAME FOUND'
-        next
-      when 'if your deck is empty'
-        puts 'NOMI FOUND'
-        next
-      when 'if you have no'
-        puts 'IF-YOU-HAVE-NO FOUND'
-        next
-      when 'if your hand has no'
-        puts 'IF-YOUR-HAND-HAS-NO FOUND'
-        # minions
-        # spells
-        # tribal?
-        next
-      when 'go dormant'
-        puts 'DORMANT FOUND'
-        next
-      when 'the first'
-        puts 'THE-FIRST FOUND'
-        # spell
-        # minion
-        next
-      when 'your first'
-        puts 'YOUR-FIRST FOUND'
-        next
-      when 'your cards that summon minions'
-        puts 'KHADGAR FOUND'
-        if all_keywords[:keywords]['summon'].nil?
-          all_keywords[:keywords]['summon'] = 1
-        else
-          all_keywords[:keywords]['summon'] += 1
-        end
-        next
-      when "if you're holding a dragon"
-        puts 'DRAGON HOLDING FOUND'
-        all_keywords[:keywords]['dragon'] = 1
-        next
-      when 'if you played an elemental last turn'
-        puts 'ELEMENTAL CHAIN FOUND'
-        all_keywords[:keywords]
-        next
-      when 'if you have 10 mana crystals'
-        puts 'OMEGA FOUND'
-        all_keywords[:keywords]['omega'] = 1
-        next
-      when 'summon'
-        puts 'SUMMONING FOUND'
-        # summon a
-        # summon x-many
-        # summon specific minion
-        next
-      when 'restore'
-        puts 'HEALTH-RESTORE FOUND'
-        # parse int from the string , then find the target type
-        next
-      when 'reduce the cost'
-        puts 'CARD REDUCTION'
-        reduction_amount = 1 # get the actual value from a string parse
-        all_keywords[:keywords]['cost-reduction'] = reduction_amount
-        next
-      else
-        puts "Phrase --#{phrase}-- not found"
-        next
+    # need to dry this up
+    # go through conditionals , this will need to be the basis for everything in the method
+    # each conditional will need it's own method inside of here, but this works for SOME cards to start this out
+    Card.kw_conditionals.each do |conditional|
+      if sentence.include?(conditional)
+        condition[:conditional] = conditional
+        break
       end
-
-      all_keywords[:remaining_plain_text].slice!(phrase)
-      p all_keywords[:remaining_plain_text]
     end
 
-    all_keywords
+    Card.kw_effect_timing.each do |timing_key , timing_key_arr|
+      timing_key_arr.each do |word|
+        if condition[:plain_text].include?(word)
+          condition[:timing] = timing_key.to_s
+          break
+        end
+      end
+    end
+
+    # go through possible targets for the conditonal (ie: you or your opponent , maybe deck)
+    Card.kw_targets.each do |target_type , target_type_words|
+      target_type_words.each do |word|
+        if sentence.include?(word)
+          condition[:target] = target_type.to_s
+          break
+        end
+      end
+    end
+
+    Card.kw_actions.each do |action_key , action_words|
+      action_words.each do |word|
+        if sentence.include?(word)
+          condition[:action] = action_key.to_s
+          break
+        end
+      end
+    end
+
+    # do I need a seperate target hash for this?
+    Card.kw_targets.each do |target_type , target_type_words|
+      target_type_words.each do |word|
+        if sentence.include?(word)
+          condition[:action_target] = target_type.to_s
+          break
+        end
+      end
+    end
+
+    Card.kw_effects.each do |effect_type , effect_type_words|
+      effect_type_words.each do |word|
+        if sentence.include?(word)
+          condition[:effect] = target_type.to_s
+          break
+        end
+      end
+    end
+
+    condition
   end
 
-  def quick_split_string(inp_string, splitter_string); end
+  # split off sentences to parse through each
+  def split_sentences
+    sentences = self.plain_text.split(".")
+    while sentences.include?(" ") do
+      sentences = check_for_blanks_in_arr(sentences)
+    end
+    sentences
+  end
+
+  def check_for_blanks_in_arr(arr)
+    if arr.include?(" ")
+      ind = arr.find_index(" ")
+      arr.delete_at(ind)
+    end
+    arr
+  end
+
+  # used for sorting out keywords when a new one is added
+  def self.kw_sort
+    key_phrases.sort.each do |phrase|
+      puts "\"#{phrase}\","
+    end
+    nil
+  end
 
   def make_card_mechanic(mechanic_name)
     mechanic = Mechanic.find_or_create_by(name: mechanic_name)
