@@ -2,8 +2,8 @@
 
 class CardsController < ApplicationController
   def index
-    cards = Card.all
-    render_if_cards_exist(cards, index_pagination_count(1))
+    cards = Card.all.paginate(page: params[:page])
+    render json: {cards: CardSerializer.new(cards) , page_count: cards.total_pages}
   end
 
   def wild_cards
@@ -12,7 +12,8 @@ class CardsController < ApplicationController
   end
 
   def standard_cards
-    cards = Card.standard_cards.paginate(page: params[:page], per_page: index_pagination_count(1))
+    #cards = Card.standard_cards.paginate(page: params[:page], per_page: index_pagination_count(1))
+    cards = Card.standard_cards.paginate(page: params[:page])
     render json: CardSerializer.new(cards)
   end
 

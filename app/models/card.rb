@@ -16,6 +16,8 @@ class Card < ApplicationRecord
   has_many :card_keywords
   has_many :keywords, through: :card_keywords
 
+  self.per_page = 8
+
   def is_standard?
     card_set.standard
   end
@@ -41,7 +43,7 @@ class Card < ApplicationRecord
   end
 
   def self.wild_cards
-    Card.joins(:card_set).where(card_sets: { standard: true }, collectable: true)
+    Card.joins(:card_set).where(card_sets: { standard: [true , false] }, collectable: true)
   end
 
   def self.find_by_tribe(tribe_name)
