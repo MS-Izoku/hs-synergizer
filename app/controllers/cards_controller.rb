@@ -2,8 +2,10 @@
 
 class CardsController < ApplicationController
   def index
-    cards = Card.all.paginate(page: params[:page])
-    render json: {cards: CardSerializer.new(cards) , page_count: cards.total_pages}
+    cards = Card.joins(:card_set).where(collectable: true).where.not(card_sets: { name: ['NYI', 'Hero Classes', 'Token'] })
+    cards = cards.paginate(page: params[:page])
+    #render json: { cards: CardSerializer.new(cards), page_count: cards.total_pages }
+    render json: create_paginated_json(cards)
   end
 
   def wild_cards
@@ -12,7 +14,7 @@ class CardsController < ApplicationController
   end
 
   def standard_cards
-    #cards = Card.standard_cards.paginate(page: params[:page], per_page: index_pagination_count(1))
+    # cards = Card.standard_cards.paginate(page: params[:page], per_page: index_pagination_count(1))
     cards = Card.standard_cards.paginate(page: params[:page])
     render json: CardSerializer.new(cards)
   end
@@ -49,16 +51,11 @@ class CardsController < ApplicationController
     8 * pages
   end
 
-  def render_if_cards_exist(card_data, page_count)
-    if !card_data
-      render json: { error: 'Cards Not Found' }, status: 404
-    else
-      if page_count && page_count > 0
-        # render json: CardSerializer.new(card_data).paginate(page: params[:page], per_page: index_pagination_count(page_count))
-        render json: CardSerializer.new(card_data.paginate(page: params[:page], per_page: index_pagination_count(page_count)))
-      else
-        render json: CardSerializer.new(card_data)
-      end
-    end
+  def create_paginated_json(cards)
+    {
+      cards: CardSerializer.new(cards),
+      page_count: cards.total_pages,
+      page: params[:page]
+    }
   end
 end

@@ -39,11 +39,11 @@ class Card < ApplicationRecord
   end
 
   def self.standard_cards
-    Card.joins(:card_set).where(card_sets: { standard: true }, collectable: true)
+    Card.joins(:card_set).where(card_sets: { standard: true }, collectable: !nil)
   end
 
   def self.wild_cards
-    Card.joins(:card_set).where(card_sets: { standard: [true , false] }, collectable: true)
+    Card.joins(:card_set).where(card_sets: { standard: [true , false] }, collectable: !nil)
   end
 
   def self.find_by_tribe(tribe_name)
