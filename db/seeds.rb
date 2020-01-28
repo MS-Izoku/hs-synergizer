@@ -14,7 +14,7 @@ if skip_fetch == false
 
   # creating special-case card sets
   CardSet.create(name: 'Hall of Fame', standard: false)
-  CardSet.create(name: "Removed" , statndard: false)
+  CardSet.create(name: "Removed" , standard: false)
 
 
   Mechanic.create(name: 'Summon')
@@ -209,6 +209,7 @@ CardSet.move_cards_to_set('Hall of Fame', CardSet.hall_of_fame)
 
 # deleting those useless cards from the db
 # HoF is still in tact, but will not be considered standard
+p ">>> Deleting Useless Cards (CardSet method)"
 CardSet.delete_useless_cards
 
 p '>> Adjusting Cardset Data'

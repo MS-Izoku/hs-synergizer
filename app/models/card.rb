@@ -94,9 +94,7 @@ class Card < ApplicationRecord
       str += ' '
       temp_str += str
     end
-    text = temp_str
-
-    text = text.sub! '_', ' ' # underscores sometimes come in with certain token/stat cards
+    # text = temp_str
 
     temp_str.sub('_', ' ')
   end

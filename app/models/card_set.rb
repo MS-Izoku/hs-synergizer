@@ -14,15 +14,15 @@ class CardSet < ApplicationRecord
 
   def self.delete_useless_cards
     Card.where(img: nil).update_all(card_set_id: CardSet.find_or_create_by(name: 'Removed').id)
-    Card.where(name: Card.removed_cards).update(card_set_id: CardSet.where(name: 'Removed'))
+    Card.where(name: CardSet.removed_cards).update(card_set_id: CardSet.where(name: 'Removed'))
     Card.joins(:card_set).where(card_sets: { name: [
                                   'NYI', 'Token', 'Debug', 'Hero Cards', 'Removed'
                                 ] }).delete_all
   end
 
-  def self.move_cards_to_set(set_name, _card_names)
+  def self.move_cards_to_set(set_name, card_names)
     set = CardSet.find_by(name: set_name)
-    Card.where(name: cards).update(card_set_id: set.id)
+    Card.where(name: card_names).update_all(card_set_id: set.id)
   end
 
   def self.removed_cards

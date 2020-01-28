@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_01_24_201717) do
+ActiveRecord::Schema.define(version: 2020_01_28_191218) do
 
   create_table "artists", force: :cascade do |t|
     t.string "name"
@@ -74,12 +74,13 @@ ActiveRecord::Schema.define(version: 2020_01_24_201717) do
     t.boolean "is_token", default: false
   end
 
-  create_table "commentables", force: :cascade do |t|
-    t.text "comment_body"
-    t.integer "upvotes", default: 0
-    t.integer "user_id"
+  create_table "comments", force: :cascade do |t|
+    t.string "commentable_type"
+    t.integer "commentable_id"
+    t.text "body"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable_type_and_commentable_id"
   end
 
   create_table "deck_cards", force: :cascade do |t|
@@ -104,26 +105,7 @@ ActiveRecord::Schema.define(version: 2020_01_24_201717) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "player_class_id", default: 0
-    t.boolean "duplicates"
     t.boolean "standard"
-  end
-
-  create_table "forum_posts", force: :cascade do |t|
-    t.string "title"
-    t.text "body"
-    t.integer "upvotes", default: 0
-    t.integer "user_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "forum_threads", force: :cascade do |t|
-    t.string "title"
-    t.text "body"
-    t.integer "upvotes", default: 0
-    t.integer "user_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
   end
 
   create_table "keywords", force: :cascade do |t|
@@ -190,13 +172,6 @@ ActiveRecord::Schema.define(version: 2020_01_24_201717) do
     t.integer "dbf_id"
   end
 
-  create_table "post_upvotes", force: :cascade do |t|
-    t.integer "post_id"
-    t.integer "forum_post_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "saved_decks", force: :cascade do |t|
     t.integer "user_id"
     t.integer "deck_id"
@@ -211,22 +186,11 @@ ActiveRecord::Schema.define(version: 2020_01_24_201717) do
   end
 
   create_table "upvotes", force: :cascade do |t|
+    t.integer "upvotable_id"
+    t.integer "count"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-  end
-
-  create_table "user_posts", force: :cascade do |t|
-    t.integer "forum_thread_id"
-    t.integer "user_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "user_threads", force: :cascade do |t|
-    t.integer "user_id"
-    t.integer "thread_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.index ["upvotable_id"], name: "index_upvotes_on_upvotable_id"
   end
 
   create_table "users", force: :cascade do |t|
