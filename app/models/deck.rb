@@ -3,19 +3,48 @@
 require 'deckstrings'
 
 class Deck < ApplicationRecord
+  # asscociations / standard-features
   has_many :deck_cards
   has_many :cards, through: :deck_cards
-  has_many :saved_decks
-  has_many :users , through: :saved_decks
   belongs_to :player_class
 
+  # polymorphic asscociations / social features
+  has_many :upvotes, as: :upvotable
+  has_many :comments, as: :commentable
+
+  has_many :saved_decks
+  has_many :users, through: :saved_decks
+
   def self.deck_creation_test
-    Deck.generate_cards_from_code(Deck.decode(Deck.test_code))
+    Deck.generate_cards_from_code(Deck.test_code)
   end
 
   # delete this before delpoyment
   def self.test_code
     'AAECAQcOnwP8BJAH+wz09QKS+AKO+wKz/AKggAOGnQPyqAOftwPj0gPn0gMIS6IE/wed8AKb8wKe+wKfoQOhoQMA'
+  end
+
+  def self.generate_cards_from_code(deck_code)
+    code = Deck.decode(deck_code)
+    cards = Card.where(dbf_id: code[:cards].keys)
+    card_ids = cards.ids
+
+    deck = Deck.find_or_create_by(
+      deck_code: deck_code,
+      player_class_id: PlayerClass.find_by(dbf_id: code[:heroes]).id,
+      standard: code[:format] != 1,
+      creator_id: 1 # TEMPORARY
+    )
+
+    cards.each do |card| 
+      DeckCard.create(
+        deck_id: deck.id,
+        card_id: card.id,
+        duplicates: code[:cards][card.dbf_id] == 2
+      ) 
+    end
+
+    deck
   end
 
   # this could be optomized better

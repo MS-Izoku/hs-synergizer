@@ -12,6 +12,9 @@ class User < ApplicationRecord
   (?=.[[:^alnum:]]) # symbol check
   /x.freeze
 
+  has_many :upvotes
+  has_many :comments
+
   def get_password_error # WIP, needs to take specific error into account for string parsing
     'Password must be between 8-50 characters and contain at least 1 number, 1 upper-case letter, 1 lower-case letter, and 1 special character'
   end
