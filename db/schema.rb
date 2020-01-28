@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_01_28_191218) do
+ActiveRecord::Schema.define(version: 2020_01_28_203847) do
 
   create_table "artists", force: :cascade do |t|
     t.string "name"
@@ -80,6 +80,7 @@ ActiveRecord::Schema.define(version: 2020_01_28_191218) do
     t.text "body"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "user_id"
     t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable_type_and_commentable_id"
   end
 

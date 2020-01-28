@@ -24,7 +24,7 @@ class Deck < ApplicationRecord
     'AAECAQcOnwP8BJAH+wz09QKS+AKO+wKz/AKggAOGnQPyqAOftwPj0gPn0gMIS6IE/wed8AKb8wKe+wKfoQOhoQMA'
   end
 
-  def self.generate_deck_from_code(deck_code)
+  def self.generate_deck_from_codep(deck_code)
     return Deck.find_by(deck_code: deck_code) if Deck.find_by(deck_code: deck_code)
 
     code = Deck.decode(deck_code)
