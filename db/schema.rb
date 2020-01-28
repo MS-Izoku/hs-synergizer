@@ -10,12 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-<<<<<<< HEAD
 ActiveRecord::Schema.define(version: 2020_01_24_201717) do
-=======
-ActiveRecord::Schema.define(version: 2020_01_03_011800) do
-
->>>>>>> b68b196a33e81cb45af875ac72ad563ea8ce96e8
 
   create_table "artists", force: :cascade do |t|
     t.string "name"
@@ -195,7 +190,6 @@ ActiveRecord::Schema.define(version: 2020_01_03_011800) do
     t.integer "dbf_id"
   end
 
-<<<<<<< HEAD
   create_table "post_upvotes", force: :cascade do |t|
     t.integer "post_id"
     t.integer "forum_post_id"
@@ -203,8 +197,6 @@ ActiveRecord::Schema.define(version: 2020_01_03_011800) do
     t.datetime "updated_at", null: false
   end
 
-=======
->>>>>>> b68b196a33e81cb45af875ac72ad563ea8ce96e8
   create_table "saved_decks", force: :cascade do |t|
     t.integer "user_id"
     t.integer "deck_id"

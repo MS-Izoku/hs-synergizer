@@ -12,7 +12,7 @@ class CardSet < ApplicationRecord
     temp
   end
 
-  def self.set_removed_cards
+  def self.delete_useless_cards
     Card.where(img: nil).update_all(card_set_id: CardSet.find_or_create_by(name: 'Removed').id)
     Card.where(name: Card.removed_cards).update(card_set_id: CardSet.where(name: 'Removed'))
     Card.joins(:card_set).where(card_sets: { name: [

@@ -12,10 +12,15 @@ show_creation_in_console = false
 if skip_fetch == false
   User.create(username: 'cornjulio', password: 'password', email: 'email@gmail.com')
 
-Mechanic.create(name: 'Summon')
-Mechanic.create(name: 'Choose One')
-Mechanic.create(name: 'Passive')
-Mechanic.create(name: 'Start of Game', description: 'Activates when the game starts, after your starting mulligan.')
+  # creating special-case card sets
+  CardSet.create(name: 'Hall of Fame', standard: false)
+  CardSet.create(name: "Removed" , statndard: false)
+
+
+  Mechanic.create(name: 'Summon')
+  Mechanic.create(name: 'Choose One')
+  Mechanic.create(name: 'Passive')
+  Mechanic.create(name: 'Start of Game', description: 'Activates when the game starts, after your starting mulligan.')
 
   puts 'Fetching Card Data <<<<<<'
 
@@ -101,10 +106,8 @@ Mechanic.create(name: 'Start of Game', description: 'Activates when the game sta
 
       # <<<<<< MECHANICS SECTION
       if card['mechanics']
-        # byebug if card['name'] == "Zilliax"
         mechanics = card['mechanics'][0] # this line needs to change, check the structure of each one if need be
         mechanics.each do |_key, mechanic|
-          # byebug
           temp_mechanic = Mechanic.find_by(name: mechanic)
           if temp_mechanic.nil?
             temp_mechanic = Mechanic.create(name: mechanic)
@@ -133,11 +136,11 @@ p '(Card)>>> Initializing Card Keyword Parsing'
 Card.all.each do |card|
   plain_text = card.plain_text
   Mechanic.all.each do |mechanic|
-    if plain_text.include?(mechanic.name)
-      next if CardMechanic.find_by(mechanic_id: mechanic.id , card_id: card.id)
-      CardMechanic.create(mechanic_id: mechanic.id, card_id: card.id)
-      p "(Card)>>> Linking --#{mechanic.name}-- to: #{card.name}"
-    end
+    next unless plain_text.include?(mechanic.name)
+    next if CardMechanic.find_by(mechanic_id: mechanic.id, card_id: card.id)
+
+    CardMechanic.create(mechanic_id: mechanic.id, card_id: card.id)
+    p "(Card)>>> Linking --#{mechanic.name}-- to: #{card.name}"
   end
 end
 
@@ -150,7 +153,7 @@ Mechanic.find_by(name: 'battlecry').update(description: 'Activates when played f
 Mechanic.find_by(name: 'casts when drawn').update(description: 'The spell card is automatically cast for no mana when drawn from your deck, and the next card in the deck is then drawn. Only found on a few Uncollectible spells.')
 Mechanic.find_by(name: 'charge').update(description: 'Enables the minion to attack on the same turn that it is summoned.')
 Mechanic.find_by(name: 'choose one').update(description: 'Gives the controlling player the ability to choose between two or more effects stated in the card. Found only on druid cards.')
-Mechanic.find_by(name: 'divine shield').update(description: '')
+Mechanic.find_by(name: 'divine shield').update(description: 'Absorbs a single tick of damage, no matter how large, then is removed.  Minions with divine shield does not trigger Poisonous during damage calculations.')
 Mechanic.find_by(name: 'combo').update(description: "Has an effect that activates when played from hand, after you've played at least one card this turn.")
 Mechanic.find_by(name: 'lifesteal').update(description: 'When damage is dealt, it heals the owners hero.')
 Mechanic.find_by(name: 'inspire').update(description: 'When you use a hero power with an Inspire minion on your side of the board, activate the effect.')
@@ -172,6 +175,7 @@ Mechanic.find_by(name: 'freeze').update(description: 'A frozen character cannot 
 Mechanic.find_by(name: 'echo').update(description: 'A card that can be played multiple times from the hand, if the user has enough mana.')
 Mechanic.find_by(name: 'deathrattle').update(description: 'An effect that activates when a minion is destoyed, or otherwise triggered by another card')
 
+# deleting useless card data post-fetch
 p '>> Deleting Useless Card Data'
 p ">>> Checking for Mechanically Named Cards (ex: 'Battlecry' , 'Rush')"
 Mechanic.all.each do |mechanic|
@@ -184,10 +188,32 @@ Mechanic.all.each do |mechanic|
   end
 end
 
+# Moving NYI / Token Cards out of Sets
+
+p 'Removing Token , NYI , and (Basic) Hero Cards'
+token_set = CardSet.create(name: 'Token', standard: false)
+nyi_set = CardSet.create(name: 'NYI', standard: false)
+heroes_set = CardSet.create(name: 'Hero Classes', standard: false)
+
+tokens = ['Treant', 'Silver Hand Recruit', "Token"]
+nyi_cards = ['Avatar of the Coin']
+hero_cards = [1066, 813, 671, 7, 31, 274, 893, 637, 930]
+
+Card.where(name: tokens).update_all(card_set_id: token_set.id, collectable: false)
+Card.where(name: nyi_cards).update_all(card_set_id: nyi_set.id, collectable: false)
+Card.where(dbf_id: hero_cards).update_all(card_set_id: heroes_set.id, collectable: false)
+
+# getting rid of cards we no longer need
+CardSet.move_cards_to_set('Removed', CardSet.removed_cards)
+CardSet.move_cards_to_set('Hall of Fame', CardSet.hall_of_fame)
+
+# deleting those useless cards from the db
+# HoF is still in tact, but will not be considered standard
+CardSet.delete_useless_cards
 
 p '>> Adjusting Cardset Data'
-# Adding Years and Standard-Play to CardSets
 
+# Adding Years and Standard-Play to CardSets
 CardSet.find_by(name: 'Basic').update(year: 2014)
 CardSet.find_by(name: 'Classic').update(year: 2014)
 CardSet.find_by(name: 'Hall of Fame').update(year: 2014)
@@ -215,7 +241,7 @@ CardSet.all.each do |set|
   if !set.year
     is_standard = false
   else
-    if !(set.year >= Date.current.year - 1 && (set.name == 'Basic' || set.name == 'Classic'))
+    unless set.year >= Date.current.year - 1 && (set.name == 'Basic' || set.name == 'Classic')
       is_standard = false
     end
   end
@@ -235,19 +261,6 @@ PlayerClass.find_by(name: 'Warlock').update(dbf_id: 893)
 PlayerClass.find_by(name: 'Druid').update(dbf_id: 274)
 PlayerClass.find_by(name: 'Rogue').update(dbf_id: 930)
 
-# Moving NYI / Token Cards out of Sets
 
-p "Removing Token , NYI , and (Basic) Hero Cards"
-token_set = CardSet.create(name: 'Token' , standard: false)
-nyi_set = CardSet.create(name: 'NYI' , standard: false)
-heroes_set = CardSet.create(name: 'Hero Classes' , standard: false)
-
-tokens = ['Treant', 'Silver Hand Recruit']
-nyi_cards = ['Avatar of the Coin']
-hero_cards = [1066, 813, 671, 7, 31, 274, 893, 637, 930]
-
-Card.where(name: tokens).update_all(card_set_id: token_set.id , collectable: false)
-Card.where(name: nyi_cards).update_all(card_set_id: nyi_set.id , collectable: false)
-Card.where(dbf_id: hero_cards).update_all(card_set_id: heroes_set.id , collectable: false)
 
 # Generate Synergies in Standard Cards
