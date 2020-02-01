@@ -2,7 +2,7 @@
 
 class CardsController < ApplicationController
   def index
-    cards = Card.joins(:card_set).where(collectable: true).where.not(card_sets: { name: ['NYI', 'Hero Classes', 'Token'] })
+    cards = Card.joins(:card_set).where(collectable: true)
     cards = cards.paginate(page: params[:page])
     # render json: { cards: CardSerializer.new(cards), page_count: cards.total_pages }
     render json: create_paginated_json(cards)
@@ -54,7 +54,7 @@ class CardsController < ApplicationController
       {
         cards: CardSerializer.new(cards),
         page_count: cards.total_pages,
-        page: params[:page]
+        page: Integer(params[:page])
       }
     else
       {
