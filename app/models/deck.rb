@@ -3,14 +3,20 @@
 require 'deckstrings'
 
 class Deck < ApplicationRecord
+  # asscociations / standard-features
   has_many :deck_cards
   has_many :cards, through: :deck_cards
-  has_many :saved_decks
-  has_many :users , through: :saved_decks
   belongs_to :player_class
 
+  # polymorphic asscociations / social features
+  has_many :upvotes, as: :upvotable
+  has_many :comments, as: :commentable
+
+  has_many :saved_decks
+  has_many :users, through: :saved_decks
+
   def self.deck_creation_test
-    Deck.generate_cards_from_code(Deck.decode(Deck.test_code))
+    Deck.generate_deck_from_code(Deck.test_code)
   end
 
   # delete this before delpoyment
@@ -18,49 +24,30 @@ class Deck < ApplicationRecord
     'AAECAQcOnwP8BJAH+wz09QKS+AKO+wKz/AKggAOGnQPyqAOftwPj0gPn0gMIS6IE/wed8AKb8wKe+wKfoQOhoQMA'
   end
 
-  # this could be optomized better
-  def self.new_create_deck_from_code(deck_code)
-    parsed_deck_code = Deck.decode(deck_code)
-    is_standard_deck = (parsed_deck_code[:format] == 2)
-    pc = PlayerClass.find_by(dbf_id: parsed_deck_code[:heroes][0])
+  def self.generate_deck_from_codep(deck_code)
+    return Deck.find_by(deck_code: deck_code) if Deck.find_by(deck_code: deck_code)
 
-    temp_deck = Deck.find_or_create_by(deck_code: deck_code, standard: is_standard_deck, player_class_id: pc.id)
-    parsed_deck_code[:cards].collect do |card, card_count|
-      temp_card = Card.find_by(dbf_id: card)
-      deck_inclusion = DeckCard.find_by(card_id: temp_card.id, deck_id: temp_deck.id)
-      unless deck_inclusion
-        has_duplicates = (card_count == 2)
-        DeckCard.create(card_id: temp_card.id, deck_id: temp_deck.id, duplicates: has_duplicates)
-      end
-    end
+    code = Deck.decode(deck_code)
+    cards = Card.where(dbf_id: code[:cards].keys)
 
-    temp_deck
-  end
+    deck = Deck.find_or_create_by(
+      deck_code: deck_code,
+      player_class_id: PlayerClass.find_by(dbf_id: code[:heroes]).id,
+      standard: code[:format] != 1,
+      creator_id: 1 # TEMPORARY
+    )
 
-  # used when the deck cards need to be sorted by mana-cost / alphabetically (in that order)
-  def order_cards
-    sorted_cards = { result: [] }
+    # this needs to be replaced with some kind of mass-creation method
+    # works for now, needs optomization (keep it out of a loop, use single query)
     cards.each do |card|
-      sorted_cards[card.mana_cost] ||= []
-      sorted_cards[card.mana_cost].push(card)
+      DeckCard.create(
+        deck_id: deck.id,
+        card_id: card.id,
+        duplicates: code[:cards][card.dbf_id] == 2
+      )
     end
 
-    sorted_cards.each do |card_set|
-      card_set.sort { |card_a, card_b| card_a.name <=> card_b.name }
-      sorted_cards[:results].push(card_set)
-    end
-    p sorted_cards[:results].flatten
-  end
-
-  # need to find a use for this, might just be in the update method in the controller
-  def change_cards(updated_deck_code)
-    temp_cards = generate_cards_from_code(updated_deck_code)
-    current_cards = generate_cards_from_code(deck_code)
-    if temp_cards != current_cards
-
-      return new_card_hash
-    else return false
-    end
+    cards
   end
 
   # returns a hash of deck code data with DBFID's

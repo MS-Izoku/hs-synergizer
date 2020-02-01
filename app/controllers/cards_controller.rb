@@ -2,26 +2,26 @@
 
 class CardsController < ApplicationController
   def index
-    cards = Card.all.paginate(page: params[:page])
-    render json: {cards: CardSerializer.new(cards) , page_count: cards.total_pages}
+    cards = Card.joins(:card_set).where(collectable: true)
+    cards = cards.paginate(page: params[:page])
+    # render json: { cards: CardSerializer.new(cards), page_count: cards.total_pages }
+    render json: create_paginated_json(cards)
   end
 
   def wild_cards
     cards = Card.wild_cards.paginate(page: params[:page], per_page: index_pagination_count(1))
-    render json: CardSerializer.new(cards)
+    render json: create_paginated_json(cards)
   end
 
   def standard_cards
-    #cards = Card.standard_cards.paginate(page: params[:page], per_page: index_pagination_count(1))
+    # cards = Card.standard_cards.paginate(page: params[:page], per_page: index_pagination_count(1))
     cards = Card.standard_cards.paginate(page: params[:page])
-    render json: CardSerializer.new(cards)
+    render json: create_paginated_json(cards)
   end
 
   def standard_cards_by_mechanic
     cards = CardMechanic.where(mechanic_id: params[:id]).cards
-    # cards = cards.paginate(page: params[:page], per_page: index_pagination_count(20))
-    # render json: CardSerializer.new(cards)
-    render_if_cards_exist(cards, index_pagination_count(1))
+    create_paginated_json(cards)
   end
 
   def standard_spells
@@ -49,16 +49,19 @@ class CardsController < ApplicationController
     8 * pages
   end
 
-  def render_if_cards_exist(card_data, page_count)
-    if !card_data
-      render json: { error: 'Cards Not Found' }, status: 404
+  def create_paginated_json(cards)
+    if cards
+      {
+        cards: CardSerializer.new(cards),
+        page_count: cards.total_pages,
+        page: Integer(params[:page])
+      }
     else
-      if page_count && page_count > 0
-        # render json: CardSerializer.new(card_data).paginate(page: params[:page], per_page: index_pagination_count(page_count))
-        render json: CardSerializer.new(card_data.paginate(page: params[:page], per_page: index_pagination_count(page_count)))
-      else
-        render json: CardSerializer.new(card_data)
-      end
+      {
+        message: 'Internal Service Error finding Cards',
+        error: cards.error,
+        status: 404
+      }
     end
   end
 end
